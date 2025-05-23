@@ -4,21 +4,24 @@ import Combine
 
 class GameManager {
     weak var scene: SCNScene?
-    weak var boatNode: SCNNode? // To get player's position
-    weak var cameraNode: SCNNode? // To help with text orientation if not using billboard
-    var infoViewModel: InfoViewModel // Published properties for UI
+    weak var boatNode: SCNNode? // Still useful for subsequent questions
+    weak var cameraNode: SCNNode?
+    var infoViewModel: InfoViewModel
 
     private var questions: [Question] = []
     private var currentQuestionIndex: Int = -1
     private var activeAnswerZones: [AnswerZoneNode] = []
 
     private var gameTimer: Timer?
-    private let questionTimeLimit: Int = 30 // Seconds
+    private let questionTimeLimit: Int = 30
 
-    // Colors for answer zones - ensure you have enough for max answers
     private let answerZoneColors: [NSColor] = [
         .systemRed, .systemGreen, .systemBlue, .systemYellow, .systemPurple, .systemOrange
     ]
+
+    // Temporary storage for initial spawn parameters
+    private var initialSpawnPositionForFirstQuestion: SCNVector3?
+    private var initialSpawnOrientationForFirstQuestion: SCNQuaternion?
 
     init(scene: SCNScene, boatNode: SCNNode, cameraNode: SCNNode, infoViewModel: InfoViewModel) {
         self.scene = scene
@@ -51,17 +54,24 @@ class GameManager {
         }
     }
 
-    func startGame() {
+    // Modified startGame to accept initial boat state for the first question
+    func startGame(initialBoatPosition: SCNVector3? = nil, initialBoatOrientation: SCNQuaternion? = nil) {
         infoViewModel.health = 3
         infoViewModel.score = 0
         infoViewModel.isGameOver = false
         infoViewModel.gameMessage = ""
-        currentQuestionIndex = -1
+        currentQuestionIndex = -1 // Reset for the new game
+
+        // Store initial parameters if provided (for the very first question spawn)
+        self.initialSpawnPositionForFirstQuestion = initialBoatPosition
+        self.initialSpawnOrientationForFirstQuestion = initialBoatOrientation
+        print("GameManager.startGame: Initial spawn params set - Pos: \(String(describing: initialBoatPosition)), Ori: \(String(describing: initialBoatOrientation))")
+
 
         if questions.isEmpty {
             loadQuestions()
         } else {
-            questions.shuffle()
+            questions.shuffle() // Re-shuffle for a new game
         }
 
         if questions.isEmpty {
@@ -71,13 +81,13 @@ class GameManager {
             return
         }
         
-        nextQuestion()
+        nextQuestion() // This will now use the initial parameters if it's the first call
     }
 
     func nextQuestion() {
-        guard let scene = scene, let boatNode = boatNode else { return }
+        guard let scene = scene else { return }
         
-        cleanupCurrentQuestion()
+        cleanupCurrentQuestion() // Remove old zones and stop timer
 
         if infoViewModel.health <= 0 {
             gameOver()
@@ -108,37 +118,85 @@ class GameManager {
 
         let question = questions[currentQuestionIndex]
         infoViewModel.currentQuestionText = question.text
-        spawnAnswerZones(for: question, aroundBoat: boatNode) // Pass the boatNode
+
+        // Determine spawn parameters based on whether it's the initial call or subsequent
+        let spawnRefPos: SCNVector3
+        var boatWorldForward: SCNVector3
+        let boatWorldRight: SCNVector3
+
+        // Check if initial parameters are set AND if this is the first question of this game instance (index 0)
+        if let initialPos = self.initialSpawnPositionForFirstQuestion,
+           let initialOri = self.initialSpawnOrientationForFirstQuestion,
+           currentQuestionIndex == 0 {
+            
+            print("Spawning FIRST question zones using initial reset position: \(initialPos)")
+            spawnRefPos = initialPos
+            
+            // Calculate forward and right vectors from the initial orientation
+            // SCNNode's orientation directly gives world orientation if it's a root node or if its parent has identity transform.
+            // For precise calculation from quaternion without a node in scene:
+            let q = initialOri
+            boatWorldForward = SCNVector3(2 * (q.x * q.z + q.w * q.y),
+                                          2 * (q.y * q.z - q.w * q.x),
+                                          1 - 2 * (q.x * q.x + q.y * q.y)).normalized() // This is +Z local
+            boatWorldForward = SCNVector3(-boatWorldForward.x, -boatWorldForward.y, -boatWorldForward.z) // Assuming -Z is "forward" for boats
+
+            boatWorldRight = SCNVector3(1 - 2 * (q.y * q.y + q.z * q.z),
+                                         2 * (q.x * q.y + q.w * q.z),
+                                         2 * (q.x * q.z - q.w * q.y)).normalized() // This is +X local
+
+            // Crucially, clear these initial parameters so they are only used once per game start
+            self.initialSpawnPositionForFirstQuestion = nil
+            self.initialSpawnOrientationForFirstQuestion = nil
+            print("Initial spawn params consumed and cleared.")
+
+        } else {
+            guard let boat = self.boatNode else {
+                print("Error: Boat node not available for subsequent question spawning.")
+                gameOver() // Or handle error appropriately
+                return
+            }
+            print("Spawning zones based on CURRENT boat presentation node. Pos: \(boat.presentation.worldPosition)")
+            spawnRefPos = boat.presentation.worldPosition
+            boatWorldForward = boat.presentation.worldFront // worldFront is -Z in world space
+            boatWorldRight = boat.presentation.worldRight   // worldRight is +X in world space
+        }
+
+        spawnAnswerZones(for: question,
+                         spawnReferencePoint: spawnRefPos,
+                         boatWorldForward: boatWorldForward,
+                         boatWorldRight: boatWorldRight)
         startTimer()
     }
 
-    private func spawnAnswerZones(for question: Question, aroundBoat boat: SCNNode) {
+    // spawnAnswerZones now takes explicit reference point and orientation vectors
+    private func spawnAnswerZones(for question: Question,
+                                  spawnReferencePoint boatPos: SCNVector3,
+                                  boatWorldForward: SCNVector3,
+                                  boatWorldRight: SCNVector3) {
         guard let scene = scene else { return }
-        activeAnswerZones.removeAll()
-
-        let boatPos = boat.presentation.worldPosition
-        let boatForward = boat.presentation.worldFront // -Z axis in world space
-        let boatRight = boat.presentation.worldRight   // +X axis in world space
+        activeAnswerZones.removeAll() // Clear any previous (should be done by cleanup)
 
         // Project to XZ plane for horizontal layout, and normalize
-        var horizontalForward = SCNVector3(boatForward.x, 0, boatForward.z).normalized()
+        var horizontalForward = SCNVector3(boatWorldForward.x, 0, boatWorldForward.z).normalized()
         if horizontalForward.length() < 0.001 { // Avoid division by zero if boat points straight up/down
-            horizontalForward = SCNVector3(0, 0, -1) // Default forward
+            horizontalForward = SCNVector3(0, 0, -1) // Default forward if original is too vertical
         }
-        var horizontalRight = SCNVector3(boatRight.x, 0, boatRight.z).normalized()
+        var horizontalRight = SCNVector3(boatWorldRight.x, 0, boatWorldRight.z).normalized()
         if horizontalRight.length() < 0.001 {
-            horizontalRight = SCNVector3(1, 0, 0) // Default right
+             // Derive from forward if right is too vertical or zero (e.g. boat looking straight up/down)
+            horizontalRight = SCNVector3.cross(SCNVector3(0,1,0), horizontalForward).normalized()
+            if horizontalRight.length() < 0.001 { horizontalRight = SCNVector3(1,0,0) } // Absolute fallback
         }
 
-        let spawnDistanceInFront: Float = 300.0 // Increased distance for larger zones
-        // Spacing = diameter of sphere + a gap (e.g., 1/2 radius as gap)
-        let spacingBetweenZoneCenters: Float = Float(AnswerZoneNode.sphereRadius * 4.0 + AnswerZoneNode.sphereRadius * 0.5)
+
+        let spawnDistanceInFront: Float = 300.0
+        let spacingBetweenZoneCenters: Float = Float(AnswerZoneNode.sphereRadius * 5.0 + AnswerZoneNode.sphereRadius * 0.5)
         
         let numberOfAnswers = Float(question.answers.count)
         
         // Y position for the center of the answer zones.
-        // Let's keep them at the boat's current Y level for now.
-        // Player will need to adjust boat's height to reach them.
+        // Using the Y from the spawnReferencePoint.
         let zoneLineY = boatPos.y
 
         // Calculate the center point of the line of answers
@@ -149,7 +207,7 @@ class GameManager {
         )
 
         let totalLineWidth = (numberOfAnswers - 1.0) * spacingBetweenZoneCenters
-        let offsetForFirstZone = -totalLineWidth / 2.0 // Start from the left
+        let offsetForFirstZone = -totalLineWidth / 2.0 // Start from the left (relative to boat's right)
 
         var availableColors = answerZoneColors
         availableColors.shuffle()
@@ -157,6 +215,7 @@ class GameManager {
         for (index, answerText) in question.answers.enumerated() {
             let displacementFromLineCenter = offsetForFirstZone + Float(index) * spacingBetweenZoneCenters
             
+            // Position is calculated by moving from lineCenterPoint along the horizontalRight vector
             let position = SCNVector3(
                 lineCenterPoint.x + horizontalRight.x * CGFloat(displacementFromLineCenter),
                 zoneLineY,
@@ -269,12 +328,15 @@ class GameManager {
         stopTimer()
         activeAnswerZones.forEach { $0.removeFromParentNode() }
         activeAnswerZones.removeAll()
+        // Do NOT clear initialSpawnPositionForFirstQuestion here,
+        // it should only be cleared after its first use in nextQuestion().
     }
 
     private func gameOver() {
         cleanupCurrentQuestion()
         infoViewModel.isGameOver = true
         if questions.isEmpty && infoViewModel.currentQuestionText.contains("Error") {
+             // Keep the error message
         } else {
             infoViewModel.currentQuestionText = "Game Over!"
         }

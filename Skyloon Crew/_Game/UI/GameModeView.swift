@@ -9,26 +9,10 @@ struct GameMode: Identifiable, Hashable {
     let description: String
 }
 
-enum TopTab: String, CaseIterable, Identifiable {
-    case map = "Map"
-    case advice = "Advice"
-    case gems = "Gems"
-
-    var id: String { self.rawValue }
-
-    var iconName: String {
-        switch self {
-        case .map: return "map.fill"
-        case .advice: return "lightbulb.fill"
-        case .gems: return "diamond.fill"
-        }
-    }
-}
 
 // MARK: - Main View
 struct GameModeView: View {
     @State private var selectedGameMode: GameMode?
-    @State private var selectedTopTab: TopTab = .map
 
     var navigateToPlayerLoading: () -> Void // Callback for navigation
 
@@ -53,13 +37,7 @@ struct GameModeView: View {
             // TopBarView was here, removed as per request (unused)
             // If you had tabs or other top bar elements, they would be here.
             // For simplicity based on current structure, we can add a simple tab selector.
-            Picker("Select Tab", selection: $selectedTopTab) {
-                ForEach(TopTab.allCases) { tab in
-                    Text(tab.rawValue).tag(tab)
-                }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
+
 
 
             // Main Content (Sidebar and Content Area)
@@ -69,16 +47,7 @@ struct GameModeView: View {
                     .background(GameColorScheme().menuItemBackground) // Using color scheme
 
                 // Content based on selected tab
-                Group {
-                    switch selectedTopTab {
-                    case .map:
-                        MapContentView(selectedGameMode: $selectedGameMode, navigateToPlayerLoading: navigateToPlayerLoading)
-                    case .advice:
-                        AdviceContentView()
-                    case .gems:
-                        GemsContentView()
-                    }
-                }
+                MapContentView(selectedGameMode: $selectedGameMode, navigateToPlayerLoading: navigateToPlayerLoading)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxHeight: .infinity) // Make HSplitView fill vertical space
@@ -243,9 +212,9 @@ struct MapContentView: View {
                     .padding(.horizontal, 30)
                     .padding(.vertical, 15)
                     .foregroundColor(GameColorScheme().selectedMenuText) // White text
-                    .background(GameColorScheme().accentRed) // Red button
+                    .background(GameColorScheme().controllerButtonIcon) // Red button
                     .cornerRadius(12)
-                    .shadow(color: GameColorScheme().accentRed!, radius: 5, x: 0, y: 3)
+                    .shadow(color: GameColorScheme().primaryText!, radius: 5, x: 0, y: 3)
             }
             .buttonStyle(PlainButtonStyle())
             .padding(.bottom, 30) // Padding at the bottom for the button
@@ -299,32 +268,11 @@ struct BottomBarView: View {
     var body: some View {
         HStack {
             Spacer() // Pushes button to the right or center if you add more items
-            Button(action: {
-                // Action for this button - e.g., go back, or open settings
-                // For now, it's a placeholder or could be removed if MapContentView's button is sufficient
-                print("Bottom Bar Button (e.g., 'Options' or 'Back') pressed")
-            }) {
-                HStack {
-                    Image(systemName: "gearshape.fill") // Example icon
-                    Text("Options") // Example text
-                }
-                .padding(.horizontal, 15)
-                .padding(.vertical, 10)
-                .foregroundColor(GameColorScheme().bottomBarText)
-                .background(GameColorScheme().menuItemBackground)
-                .cornerRadius(10)
-                .shadow(radius: 2)
-            }
-            .buttonStyle(PlainButtonStyle())
             Spacer() // Centers the button if only one item
         }
         .padding()
         .frame(height: 70) // Increased height for better touch/click area
         .background(GameColorScheme().secondaryBackground) // Darker background for contrast
-        .overlay(
-            Rectangle().frame(height: 1).foregroundColor(GameColorScheme().menuText as! Color),
-            alignment: .top
-        )
     }
 }
 

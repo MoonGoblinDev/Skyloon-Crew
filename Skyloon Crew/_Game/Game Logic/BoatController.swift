@@ -20,9 +20,9 @@ class BoatController: NSObject {
     private let cameraOrientationSmoothingFactor: Float = 0.05 // Lower value = smoother/slower
     
     // Physics properties
-    private let rotationForce: Float = 4.0
-    private let forwardForce: Float = 7.0
-    private let verticalForce: Float = 3.0 // New: Force for up/down movement
+    private let rotationForce: Float = 30.0
+    private let forwardForce: Float = 50.0
+    private let verticalForce: Float = 20.0 // New: Force for up/down movement
     
     // Paddling timer control
     private var canPaddleLeft = true
