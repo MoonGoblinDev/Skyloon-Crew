@@ -31,10 +31,9 @@ class GameManager {
     private func loadQuestions() {
         guard let url = Bundle.main.url(forResource: "questions", withExtension: "json") else {
             print("Error: questions.json not found in bundle.")
-            self.questions = [] // Ensure questions list is empty if file not found
-            // Optionally, update UI to inform user
+            self.questions = []
             infoViewModel.currentQuestionText = "Error: Question data not found."
-            infoViewModel.isGameOver = true // Or a specific error state
+            infoViewModel.isGameOver = true
             return
         }
 
@@ -43,13 +42,12 @@ class GameManager {
             let decoder = JSONDecoder()
             self.questions = try decoder.decode([Question].self, from: data)
             print("Successfully loaded \(self.questions.count) questions from JSON.")
-            // Shuffle once after loading
             self.questions.shuffle()
         } catch {
             print("Error loading or decoding questions.json: \(error)")
-            self.questions = [] // Ensure questions list is empty on error
+            self.questions = []
             infoViewModel.currentQuestionText = "Error: Could not load questions."
-            infoViewModel.isGameOver = true // Or a specific error state
+            infoViewModel.isGameOver = true
         }
     }
 
@@ -58,17 +56,15 @@ class GameManager {
         infoViewModel.score = 0
         infoViewModel.isGameOver = false
         infoViewModel.gameMessage = ""
-        currentQuestionIndex = -1 // So nextQuestion starts from 0
+        currentQuestionIndex = -1
 
-        // Re-load and/or re-shuffle questions if needed, or ensure they are loaded.
-        if questions.isEmpty { // Attempt to load again if empty, e.g., if a previous attempt failed but might now succeed.
+        if questions.isEmpty {
             loadQuestions()
         } else {
-            questions.shuffle() // Re-shuffle for a new game
+            questions.shuffle()
         }
 
         if questions.isEmpty {
-            // If still empty after attempt, game cannot start.
             print("No questions available to start the game.")
             infoViewModel.currentQuestionText = "No questions available to start the game."
             infoViewModel.isGameOver = true
@@ -81,7 +77,7 @@ class GameManager {
     func nextQuestion() {
         guard let scene = scene, let boatNode = boatNode else { return }
         
-        cleanupCurrentQuestion() // Remove old zones and stop timer
+        cleanupCurrentQuestion()
 
         if infoViewModel.health <= 0 {
             gameOver()
@@ -91,52 +87,82 @@ class GameManager {
         currentQuestionIndex += 1
         if currentQuestionIndex >= questions.count {
             if questions.isEmpty {
-                // This case should ideally be caught by startGame or loadQuestions
                 infoViewModel.currentQuestionText = "No questions available. Game Over."
                 gameOver()
                 return
             }
-            // All questions answered, loop back to the beginning
             print("All questions answered. Restarting question cycle.")
             currentQuestionIndex = 0
-            questions.shuffle() // Re-shuffle for variety on loop
+            questions.shuffle()
             infoViewModel.gameMessage = "New round of questions!"
              DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                  self?.infoViewModel.gameMessage = ""
              }
         }
 
-        // Ensure we still have a valid index after potential looping/shuffling
         guard questions.indices.contains(currentQuestionIndex) else {
             print("Error: currentQuestionIndex is out of bounds after attempting to loop.")
-            gameOver() // Or handle as a critical error
+            gameOver()
             return
         }
 
         let question = questions[currentQuestionIndex]
         infoViewModel.currentQuestionText = question.text
-        spawnAnswerZones(for: question, around: boatNode.presentation.worldPosition)
+        spawnAnswerZones(for: question, aroundBoat: boatNode) // Pass the boatNode
         startTimer()
     }
 
-    private func spawnAnswerZones(for question: Question, around center: SCNVector3) {
+    private func spawnAnswerZones(for question: Question, aroundBoat boat: SCNNode) {
         guard let scene = scene else { return }
-        activeAnswerZones.removeAll() // Clear any previous (should be done by cleanup)
+        activeAnswerZones.removeAll()
 
-        let spawnDistance: Float = 30.0 // How far from the player center
-        let angleStep = (2.0 * .pi) / Float(question.answers.count) // Distribute answers in a circle
+        let boatPos = boat.presentation.worldPosition
+        let boatForward = boat.presentation.worldFront // -Z axis in world space
+        let boatRight = boat.presentation.worldRight   // +X axis in world space
+
+        // Project to XZ plane for horizontal layout, and normalize
+        var horizontalForward = SCNVector3(boatForward.x, 0, boatForward.z).normalized()
+        if horizontalForward.length() < 0.001 { // Avoid division by zero if boat points straight up/down
+            horizontalForward = SCNVector3(0, 0, -1) // Default forward
+        }
+        var horizontalRight = SCNVector3(boatRight.x, 0, boatRight.z).normalized()
+        if horizontalRight.length() < 0.001 {
+            horizontalRight = SCNVector3(1, 0, 0) // Default right
+        }
+
+        let spawnDistanceInFront: Float = 300.0 // Increased distance for larger zones
+        // Spacing = diameter of sphere + a gap (e.g., 1/2 radius as gap)
+        let spacingBetweenZoneCenters: Float = Float(AnswerZoneNode.sphereRadius * 4.0 + AnswerZoneNode.sphereRadius * 0.5)
+        
+        let numberOfAnswers = Float(question.answers.count)
+        
+        // Y position for the center of the answer zones.
+        // Let's keep them at the boat's current Y level for now.
+        // Player will need to adjust boat's height to reach them.
+        let zoneLineY = boatPos.y
+
+        // Calculate the center point of the line of answers
+        let lineCenterPoint = SCNVector3(
+            boatPos.x + horizontalForward.x * CGFloat(spawnDistanceInFront),
+            zoneLineY,
+            boatPos.z + horizontalForward.z * CGFloat(spawnDistanceInFront)
+        )
+
+        let totalLineWidth = (numberOfAnswers - 1.0) * spacingBetweenZoneCenters
+        let offsetForFirstZone = -totalLineWidth / 2.0 // Start from the left
 
         var availableColors = answerZoneColors
         availableColors.shuffle()
 
         for (index, answerText) in question.answers.enumerated() {
-            let angle = Float(index) * angleStep
-            let x = center.x + CGFloat(spawnDistance) * CGFloat(cos(angle))
-            let z = center.z + CGFloat(spawnDistance) * CGFloat(sin(angle))
-            // Keep Y at a manageable height, e.g., slightly above water if you have water
-            let y = center.y // Or a fixed Y like 2.0
-
-            let position = SCNVector3(x, y, z)
+            let displacementFromLineCenter = offsetForFirstZone + Float(index) * spacingBetweenZoneCenters
+            
+            let position = SCNVector3(
+                lineCenterPoint.x + horizontalRight.x * CGFloat(displacementFromLineCenter),
+                zoneLineY,
+                lineCenterPoint.z + horizontalRight.z * CGFloat(displacementFromLineCenter)
+            )
+            
             let isCorrect = (answerText == question.correctAnswer)
             let color = availableColors[index % availableColors.count]
 
@@ -155,43 +181,34 @@ class GameManager {
             return
         }
 
-        // Check if this specific zone is still considered active.
-        // This needs to be done before cleanup.
         guard activeAnswerZones.contains(where: { $0 === answerZoneContainer }) else {
             print("This answer zone has already been processed or cleaned up.")
             return
         }
         
-        // --- Immediate action part ---
-        let wasCorrect = answerZoneContainer.isCorrect // Store result
-        // let chosenAnswerText = answerZoneContainer.answerText // Store text for message (optional)
+        let wasCorrect = answerZoneContainer.isCorrect
         
-        stopTimer() // Stop timer related to the current question
-        cleanupCurrentQuestion() // Remove all answer zones IMMEDIATELY
+        stopTimer()
+        cleanupCurrentQuestion()
 
-        // --- Process result and UI update part ---
         if wasCorrect {
             infoViewModel.score += 10
             infoViewModel.gameMessage = "Correct! +10 Points"
-            // Play a success sound or animation
         } else {
             infoViewModel.health -= 1
             infoViewModel.gameMessage = "Wrong! -1 Health"
-            // Play a failure sound or animation
             if infoViewModel.health <= 0 {
-                gameOver() // gameOver also calls cleanup, but it's fine.
-                return // Don't proceed to next question if game over
+                gameOver()
+                return
             }
         }
         
-        // Show message briefly then proceed
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            self?.infoViewModel.gameMessage = "" // Clear message
+            self?.infoViewModel.gameMessage = ""
             self?.nextQuestion()
         }
     }
     
-    // Helper to find the main AnswerZoneNode from a child node (like the sphere)
     private func findAnswerZoneContainer(for node: SCNNode) -> AnswerZoneNode? {
         var currentNode: SCNNode? = node
         while currentNode != nil {
@@ -205,7 +222,7 @@ class GameManager {
 
     private func startTimer() {
         infoViewModel.timeLeft = questionTimeLimit
-        gameTimer?.invalidate() // Invalidate any existing timer
+        gameTimer?.invalidate()
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateTimer()
         }
@@ -225,7 +242,6 @@ class GameManager {
     }
 
     private func handleTimeout() {
-        // Check if zones are still active; if not, timeout might be for an already answered question.
         guard !activeAnswerZones.isEmpty else {
             print("Timer fired but no active answer zones. Likely already handled.")
             stopTimer()
@@ -233,11 +249,10 @@ class GameManager {
         }
 
         stopTimer()
-        cleanupCurrentQuestion() // Clean up zones on timeout
+        cleanupCurrentQuestion()
 
         infoViewModel.health -= 1
         infoViewModel.gameMessage = "Time's Up! -1 Health"
-        // Play timeout sound
         
         if infoViewModel.health <= 0 {
             gameOver()
@@ -257,16 +272,13 @@ class GameManager {
     }
 
     private func gameOver() {
-        cleanupCurrentQuestion() // Ensure zones are cleared
+        cleanupCurrentQuestion()
         infoViewModel.isGameOver = true
-        // If questions were empty, this message might be overwritten by loadQuestions/startGame.
         if questions.isEmpty && infoViewModel.currentQuestionText.contains("Error") {
-             // Keep the error message
         } else {
             infoViewModel.currentQuestionText = "Game Over!"
         }
         infoViewModel.gameMessage = "Final Score: \(infoViewModel.score)"
-        // Optionally, navigate to a game over screen or show a prominent UI message
         print("GAME OVER. Final Score: \(infoViewModel.score)")
     }
 }

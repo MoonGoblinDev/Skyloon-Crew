@@ -20,6 +20,10 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     // Connection Manager and Observation
     private let connectionManager: ConnectionManager // Store the instance
     private var cancellables = Set<AnyCancellable>() // To store Combine subscriptions
+    
+    // Default starting state for the boat
+    private let defaultBoatPosition = SCNVector3(x: 0, y: 1, z: 0) // Slightly above origin if there's a floor/water
+    private let defaultBoatOrientation = SCNQuaternion(x: 0, y: 0, z: 0, w: 1) // No rotation
 
     // MARK: - Initializer
 
@@ -40,24 +44,26 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         super.viewDidLoad()
 
         setupScene()
-        setupBoat() // Boat node must be available for GameManager
+        setupBoat()
 
         infoViewModel = InfoViewModel()
         guard let boatNode = self.boatNode, let cameraNode = sceneView.pointOfView else {
              fatalError("Boat node or camera node not found before initializing GameManager.")
         }
+        // Initialize GameManager
         gameManager = GameManager(scene: scene,
                                   boatNode: boatNode,
                                   cameraNode: cameraNode,
                                   infoViewModel: infoViewModel)
 
         setupSwiftUIOverlay()
-        observeConnectionManager() // <-- Call the observation setup
+        observeConnectionManager()
 
         sceneView.delegate = self
         scene.physicsWorld.contactDelegate = self
 
-        gameManager.startGame()
+        // Initial game start
+        triggerFullGameRestart() // Start the game by triggering a full reset and game manager start
     }
 
     override func viewDidLayout() {
@@ -129,7 +135,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
 
     private func setupSwiftUIOverlay() {
         let overlayView = GameOverlayView(viewModel: infoViewModel, onRestartGame: { [weak self] in
-            self?.gameManager.startGame()
+            self?.triggerFullGameRestart() // Changed to call new restart function
         })
         hostingView = NSHostingView(rootView: overlayView)
         hostingView.frame = sceneView.bounds
@@ -170,6 +176,47 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             }
         }
     }
+    
+    private func prepareForNewGameSceneState() {
+            guard let boat = self.boatNode, let boatCtrl = self.boatController else {
+                print("Error: Boat node or controller not available for scene reset.")
+                return
+            }
+
+            print("Preparing scene for new game: Resetting boat state.")
+
+            // Reset boat physics
+            if let physicsBody = boat.physicsBody {
+                physicsBody.clearAllForces()
+                physicsBody.velocity = SCNVector3Zero
+                physicsBody.angularVelocity = SCNVector4Zero
+            }
+
+            // Reset boat position and orientation
+            boat.position = defaultBoatPosition
+            boat.orientation = defaultBoatOrientation
+            // SCNView.prepare is useful if you want to ensure nodes are ready, but not strictly necessary here
+            // self.sceneView.prepare([boat], completionHandler: nil)
+
+
+            // Snap camera to the new boat state
+            boatCtrl.snapCameraToBoat()
+            
+            // GameManager.cleanupCurrentQuestion() will handle removing answer zones.
+            // If there were other scene elements dynamically added by GameViewController,
+            // they would be removed here. For now, answer zones are the main ones.
+        }
+
+        private func triggerFullGameRestart() {
+            print("Triggering full game restart...")
+            // 1. Reset SceneKit world state (boat, camera)
+            self.prepareForNewGameSceneState()
+
+            // 2. Reset game logic and start new game (questions, score, health)
+            // GameManager's startGame will call nextQuestion, which calls cleanupCurrentQuestion.
+            self.gameManager.startGame()
+        }
+
 
 
     // MARK: - SCNSceneRendererDelegate

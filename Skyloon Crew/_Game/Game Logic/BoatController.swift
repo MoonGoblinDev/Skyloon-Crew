@@ -20,8 +20,8 @@ class BoatController: NSObject {
     private let cameraOrientationSmoothingFactor: Float = 0.05 // Lower value = smoother/slower
     
     // Physics properties
-    private let rotationForce: Float = 2.0
-    private let forwardForce: Float = 5.0
+    private let rotationForce: Float = 4.0
+    private let forwardForce: Float = 7.0
     private let verticalForce: Float = 3.0 // New: Force for up/down movement
     
     // Paddling timer control
@@ -59,11 +59,11 @@ class BoatController: NSObject {
         let shape = SCNPhysicsShape(node: boatNode, options: [SCNPhysicsShape.Option.keepAsCompound: true])
         let physicsBody = SCNPhysicsBody(type: .dynamic, shape: shape)
         
-        physicsBody.mass = 5.0
+        physicsBody.mass = 10.0
         physicsBody.friction = 0.1
         physicsBody.restitution = 0.2
         physicsBody.angularDamping = 0.1
-        physicsBody.damping = 0.05
+        physicsBody.damping = 0.1
         physicsBody.isAffectedByGravity = false // Important for controlled vertical movement
         boatNode.physicsBody = physicsBody
     }
@@ -254,6 +254,27 @@ class BoatController: NSObject {
         let forceVector = SCNVector3(0, CGFloat(direction * verticalForce), 0)
         boatNode.physicsBody?.applyForce(forceVector, asImpulse: true)
     }
+    
+    public func snapCameraToBoat() {
+            guard let pivot = cameraPivotNode else {
+                print("Warning: Camera pivot node not available for snapping.")
+                return
+            }
+            // No physics body check here, as we want to snap even if physics isn't active
+            // or if we're setting an initial state before physics simulation starts.
+
+            // Use the boatNode's direct transform, not presentation, as we are likely
+            // calling this immediately after setting the boat's transform programmatically.
+            let targetPosition = boatNode.worldPosition
+            let targetOrientation = boatNode.worldOrientation
+
+            pivot.worldPosition = targetPosition
+            pivot.worldOrientation = targetOrientation
+            
+            // The cameraNode itself is already positioned relative to the pivot,
+            // so updating the pivot is sufficient.
+            print("Camera snapped to boat's new position/orientation.")
+        }
 
     // MARK: - Update Method
     
