@@ -3,128 +3,147 @@ import SwiftUI
 
 struct GameOverlayView: View {
     @ObservedObject var viewModel: InfoViewModel
-    var onRestartGame: () -> Void // Callback to restart the game
+    var onRestartGame: () -> Void
 
     var body: some View {
-        VStack(alignment: .center, spacing: 10) {
-            if viewModel.isGameOver {
-                gameOverContent
-            } else {
-                gamePlayContent
+        GeometryReader { geometry in
+            let basePadding = max(8, min(geometry.size.width, geometry.size.height) * 0.015)
+            let isSmallHeight = geometry.size.height < 400 // Example threshold for very small screens
+
+            VStack(alignment: .center, spacing: basePadding * 0.5) { // Scaled spacing
+                if viewModel.isGameOver {
+                    gameOverContent(geometry: geometry, basePadding: basePadding)
+                } else {
+                    gamePlayContent(geometry: geometry, basePadding: basePadding, isSmallHeight: isSmallHeight)
+                }
             }
+            .padding(basePadding)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+            .background(Color.black.opacity(0.001)) // Minimal background for gesture hit testing if ever needed
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Align content to top
-        .background(Color.black.opacity(0.01)) // Almost transparent, for gesture receiving if needed
     }
 
     @ViewBuilder
-    private var gamePlayContent: some View {
-        
+    private func gamePlayContent(geometry: GeometryProxy, basePadding: CGFloat, isSmallHeight: Bool) -> some View {
+        let questionBoxMaxWidth = geometry.size.width * 0.9
+        let questionBoxMaxHeight = geometry.size.height * (isSmallHeight ? 0.3 : 0.2) // More space for question on small height screens
+        let infoBoxPadding = basePadding * 0.75
+        let infoBoxCornerRadius = basePadding * 0.6
+
         ZStack {
-            VStack{
+            // Main HUD elements
+            VStack(spacing: basePadding * 0.5) {
                 HStack {
                     HealthDisplayView(currentHealth: viewModel.health)
-                        .padding(.trailing)
+                        .padding(.trailing, basePadding * 0.5)
                     Spacer()
                 }
-                .padding(.vertical, 5)
+                .padding(.bottom, basePadding * 0.25) // Less padding if space is tight
                 
-                // Question Text
                 Text(viewModel.currentQuestionText)
                     .font(.headline)
+                    .minimumScaleFactor(0.6)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding()
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(8)
+                    .padding(infoBoxPadding)
+                    .background(Color.black.opacity(0.35))
+                    .cornerRadius(infoBoxCornerRadius)
+                    .frame(maxWidth: questionBoxMaxWidth, maxHeight: questionBoxMaxHeight)
                 
-                Spacer()
+                Spacer() // Pushes score/time to bottom
                 
                 HStack {
                     Text("Score: \(viewModel.score)")
                         .font(.title2)
+                        .minimumScaleFactor(0.7)
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.black.opacity(0.3))
-                        .cornerRadius(8)
+                        .padding(infoBoxPadding * 0.8) // Slightly smaller padding for these
+                        .background(Color.black.opacity(0.35))
+                        .cornerRadius(infoBoxCornerRadius * 0.8)
                     
                     Spacer()
                     
-                    // Timer
                     Text("Time: \(viewModel.timeLeft)")
                         .font(.title3)
-                        .foregroundColor(viewModel.timeLeft <= 10 ? .red : .yellow) // Highlight when time is low
-                        .padding(8)
-                        .background(Color.black.opacity(0.3))
-                        .cornerRadius(8)
+                        .minimumScaleFactor(0.7)
+                        .foregroundColor(viewModel.timeLeft <= 10 ? .red : .yellow)
+                        .padding(infoBoxPadding * 0.8)
+                        .background(Color.black.opacity(0.35))
+                        .cornerRadius(infoBoxCornerRadius * 0.8)
                 }
-                .padding(.vertical, 5)
             }
-            // Game Message (Correct/Wrong/Time's Up)
+
+            // Game Message (centered)
             if !viewModel.gameMessage.isEmpty {
                 Text(viewModel.gameMessage)
-                    .font(.headline)
-                    .foregroundColor(viewModel.gameMessage.contains("Correct") ? .green : (viewModel.gameMessage.contains("Wrong") || viewModel.gameMessage.contains("Time's Up") ? .orange : .white )) // Color logic
-                    .padding()
-                    .background(Color.black.opacity(0.5))
-                    .cornerRadius(8)
-                    .transition(.opacity.combined(with: .scale))
+                    .font(isSmallHeight ? .caption : .headline) // Smaller font for message on small screens
+                    .fontWeight(.medium)
+                    .minimumScaleFactor(0.7)
+                    .foregroundColor(viewModel.gameMessage.contains("Correct") ? .green : (viewModel.gameMessage.contains("Wrong") || viewModel.gameMessage.contains("Time's Up") ? .orange : .yellow ))
+                    .padding(basePadding)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(infoBoxCornerRadius)
+                    .shadow(radius: 3)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    .frame(maxWidth: geometry.size.width * 0.75) // Constrain width of message
             }
         }
-
     }
 
     @ViewBuilder
-    private var gameOverContent: some View {
-        VStack {
+    private func gameOverContent(geometry: GeometryProxy, basePadding: CGFloat) -> some View {
+        let panelMaxWidth = min(450, geometry.size.width * 0.85)
+        let panelPadding = basePadding * 1.5
+        let panelCornerRadius = basePadding
+        let panelSpacing = basePadding * 1.2
+
+        let buttonWidth = panelMaxWidth * 0.55
+        let buttonHeight = max(40, min(buttonWidth * 0.28, geometry.size.height * 0.07)) // Dynamic height with min/max
+        let buttonCornerRadius = buttonHeight * 0.25
+
+        VStack { // This VStack centers the gameOver panel
             Spacer()
-            VStack(spacing: 20) {
+            VStack(spacing: panelSpacing) {
                 Text("Game Over!")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.system(size: max(24, min(panelMaxWidth * 0.12, geometry.size.height * 0.08)), weight: .bold)) // Scaled large title
                     .foregroundColor(.white)
+                    .minimumScaleFactor(0.5)
                 
                 Text(viewModel.gameMessage) // Shows final score
-                    .font(.title2)
+                    .font(.system(size: max(16, min(panelMaxWidth * 0.07, geometry.size.height * 0.05)))) // Scaled title2-like
                     .foregroundColor(.white)
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, panelPadding * 0.5)
                 
-                Button(action: {
-                    onRestartGame()
-                }) {
-                    // The whole background is tappable
-                    Rectangle()
-                        .overlay(
-                            Text("Restart Game")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                            
-                        )
-                        .frame(width: 200, height: 50)
-                        .cornerRadius(10)
-                        .foregroundColor(.blue)
-                    
+                Button(action: { onRestartGame() }) {
+                    Text("Restart Game")
+                        .font(.system(size: max(16, min(buttonWidth * 0.15, buttonHeight * 0.4)))) // Scaled button text
+                        .fontWeight(.semibold)
+                        .minimumScaleFactor(0.5)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, basePadding * 0.5) // Internal padding for text
+                        .frame(width: buttonWidth, height: buttonHeight)
+                        .background(Color.blue.opacity(0.8))
+                        .cornerRadius(buttonCornerRadius)
+                        .shadow(radius: 3)
                 }
-                .buttonStyle(PlainButtonStyle()) // Prevents default button padding/border
-                .edgesIgnoringSafeArea(.all)
-                
+                .buttonStyle(PlainButtonStyle())
             }
-            .padding()
-            .background(Color.black.opacity(0.7))
-            .cornerRadius(15)
-            .frame(maxWidth: 400)
-            
+            .padding(panelPadding)
+            .background(Color.black.opacity(0.75))
+            .cornerRadius(panelCornerRadius)
+            .frame(maxWidth: panelMaxWidth)
+            .shadow(color: .black.opacity(0.3), radius: 10)
             Spacer()
-        } // Limit width of game over panel
-        
+        }
+        .frame(width: geometry.size.width, height: geometry.size.height) // Ensure centering VStack fills geometry
     }
 }
 
 // Preview
 struct GameOverlayView_Previews: PreviewProvider {
     static var previews: some View {
-        // REMOVED: let SCNView = SCNView()
-
         let previewViewModel = InfoViewModel()
         previewViewModel.score = 100
         previewViewModel.health = 2
@@ -136,14 +155,21 @@ struct GameOverlayView_Previews: PreviewProvider {
         gameOverViewModel.isGameOver = true
         gameOverViewModel.gameMessage = "Final Score: 150"
 
-
         return Group {
             GameOverlayView(viewModel: previewViewModel, onRestartGame: {})
-                .previewLayout(.sizeThatFits)
+                .frame(width: 800, height: 600).previewDisplayName("Gameplay 800x600")
                 .preferredColorScheme(.dark)
             
             GameOverlayView(viewModel: gameOverViewModel, onRestartGame: {})
-                .previewLayout(.sizeThatFits)
+                 .frame(width: 800, height: 600).previewDisplayName("Game Over 800x600")
+                .preferredColorScheme(.dark)
+
+            GameOverlayView(viewModel: previewViewModel, onRestartGame: {})
+                .frame(width: 400, height: 300).previewDisplayName("Gameplay 400x300 (Small)")
+                .preferredColorScheme(.dark)
+
+            GameOverlayView(viewModel: gameOverViewModel, onRestartGame: {})
+                 .frame(width: 400, height: 300).previewDisplayName("Game Over 400x300 (Small)")
                 .preferredColorScheme(.dark)
         }
     }
