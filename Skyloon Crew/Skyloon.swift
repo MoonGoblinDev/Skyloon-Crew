@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct Skyloon_CrewApp: App {
+struct Skyloon: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
