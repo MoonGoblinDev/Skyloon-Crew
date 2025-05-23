@@ -59,11 +59,11 @@ class BoatController: NSObject {
         let shape = SCNPhysicsShape(node: boatNode, options: [SCNPhysicsShape.Option.keepAsCompound: true])
         let physicsBody = SCNPhysicsBody(type: .dynamic, shape: shape)
         
-        physicsBody.mass = 10.0
+        physicsBody.mass = 5.0
         physicsBody.friction = 0.1
         physicsBody.restitution = 0.2
         physicsBody.angularDamping = 0.1
-        physicsBody.damping = 0.1
+        physicsBody.damping = 0.05
         physicsBody.isAffectedByGravity = false // Important for controlled vertical movement
         boatNode.physicsBody = physicsBody
     }

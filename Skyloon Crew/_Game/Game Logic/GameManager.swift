@@ -29,14 +29,28 @@ class GameManager {
     }
 
     private func loadQuestions() {
-        // Hardcode some questions for now. In a real game, load from a file (JSON, Plist).
-        questions = [
-            Question(text: "What is 2 + 2?", answers: ["3", "4", "5"], correctAnswer: "4"),
-            Question(text: "Capital of France?", answers: ["Berlin", "Madrid", "Paris"], correctAnswer: "Paris"),
-            Question(text: "Which planet is red?", answers: ["Mars", "Venus", "Jupiter"], correctAnswer: "Mars"),
-            Question(text: "What is H2O?", answers: ["Salt", "Sugar", "Water"], correctAnswer: "Water")
-        ]
-        questions.shuffle() // Randomize question order
+        guard let url = Bundle.main.url(forResource: "questions", withExtension: "json") else {
+            print("Error: questions.json not found in bundle.")
+            self.questions = [] // Ensure questions list is empty if file not found
+            // Optionally, update UI to inform user
+            infoViewModel.currentQuestionText = "Error: Question data not found."
+            infoViewModel.isGameOver = true // Or a specific error state
+            return
+        }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            self.questions = try decoder.decode([Question].self, from: data)
+            print("Successfully loaded \(self.questions.count) questions from JSON.")
+            // Shuffle once after loading
+            self.questions.shuffle()
+        } catch {
+            print("Error loading or decoding questions.json: \(error)")
+            self.questions = [] // Ensure questions list is empty on error
+            infoViewModel.currentQuestionText = "Error: Could not load questions."
+            infoViewModel.isGameOver = true // Or a specific error state
+        }
     }
 
     func startGame() {
@@ -45,6 +59,22 @@ class GameManager {
         infoViewModel.isGameOver = false
         infoViewModel.gameMessage = ""
         currentQuestionIndex = -1 // So nextQuestion starts from 0
+
+        // Re-load and/or re-shuffle questions if needed, or ensure they are loaded.
+        if questions.isEmpty { // Attempt to load again if empty, e.g., if a previous attempt failed but might now succeed.
+            loadQuestions()
+        } else {
+            questions.shuffle() // Re-shuffle for a new game
+        }
+
+        if questions.isEmpty {
+            // If still empty after attempt, game cannot start.
+            print("No questions available to start the game.")
+            infoViewModel.currentQuestionText = "No questions available to start the game."
+            infoViewModel.isGameOver = true
+            return
+        }
+        
         nextQuestion()
     }
 
@@ -53,16 +83,33 @@ class GameManager {
         
         cleanupCurrentQuestion() // Remove old zones and stop timer
 
-        currentQuestionIndex += 1
-        if currentQuestionIndex >= questions.count {
-            // Game finished all questions, or could loop/show score
-            infoViewModel.currentQuestionText = "Game Complete! Final Score: \(infoViewModel.score)"
-            infoViewModel.isGameOver = true // Or a different state for "won"
-            infoViewModel.timeLeft = 0
-            return
-        }
         if infoViewModel.health <= 0 {
             gameOver()
+            return
+        }
+
+        currentQuestionIndex += 1
+        if currentQuestionIndex >= questions.count {
+            if questions.isEmpty {
+                // This case should ideally be caught by startGame or loadQuestions
+                infoViewModel.currentQuestionText = "No questions available. Game Over."
+                gameOver()
+                return
+            }
+            // All questions answered, loop back to the beginning
+            print("All questions answered. Restarting question cycle.")
+            currentQuestionIndex = 0
+            questions.shuffle() // Re-shuffle for variety on loop
+            infoViewModel.gameMessage = "New round of questions!"
+             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                 self?.infoViewModel.gameMessage = ""
+             }
+        }
+
+        // Ensure we still have a valid index after potential looping/shuffling
+        guard questions.indices.contains(currentQuestionIndex) else {
+            print("Error: currentQuestionIndex is out of bounds after attempting to loop.")
+            gameOver() // Or handle as a critical error
             return
         }
 
@@ -103,21 +150,27 @@ class GameManager {
     }
 
     func playerChoseAnswer(collidedZoneNode: SCNNode) {
-        // Find the AnswerZoneNode from the actual SCNNode that was hit (which might be the sphere)
         guard let answerZoneContainer = findAnswerZoneContainer(for: collidedZoneNode) else {
             print("Collision with non-answer zone object, or zone already processed.")
             return
         }
 
-        // Prevent processing the same collision multiple times if events fire rapidly
+        // Check if this specific zone is still considered active.
+        // This needs to be done before cleanup.
         guard activeAnswerZones.contains(where: { $0 === answerZoneContainer }) else {
-            print("This answer zone has already been processed.")
+            print("This answer zone has already been processed or cleaned up.")
             return
         }
         
-        stopTimer()
+        // --- Immediate action part ---
+        let wasCorrect = answerZoneContainer.isCorrect // Store result
+        // let chosenAnswerText = answerZoneContainer.answerText // Store text for message (optional)
+        
+        stopTimer() // Stop timer related to the current question
+        cleanupCurrentQuestion() // Remove all answer zones IMMEDIATELY
 
-        if answerZoneContainer.isCorrect {
+        // --- Process result and UI update part ---
+        if wasCorrect {
             infoViewModel.score += 10
             infoViewModel.gameMessage = "Correct! +10 Points"
             // Play a success sound or animation
@@ -126,7 +179,7 @@ class GameManager {
             infoViewModel.gameMessage = "Wrong! -1 Health"
             // Play a failure sound or animation
             if infoViewModel.health <= 0 {
-                gameOver()
+                gameOver() // gameOver also calls cleanup, but it's fine.
                 return // Don't proceed to next question if game over
             }
         }
@@ -172,7 +225,16 @@ class GameManager {
     }
 
     private func handleTimeout() {
+        // Check if zones are still active; if not, timeout might be for an already answered question.
+        guard !activeAnswerZones.isEmpty else {
+            print("Timer fired but no active answer zones. Likely already handled.")
+            stopTimer()
+            return
+        }
+
         stopTimer()
+        cleanupCurrentQuestion() // Clean up zones on timeout
+
         infoViewModel.health -= 1
         infoViewModel.gameMessage = "Time's Up! -1 Health"
         // Play timeout sound
@@ -195,21 +257,16 @@ class GameManager {
     }
 
     private func gameOver() {
-        cleanupCurrentQuestion()
+        cleanupCurrentQuestion() // Ensure zones are cleared
         infoViewModel.isGameOver = true
-        infoViewModel.currentQuestionText = "Game Over!"
+        // If questions were empty, this message might be overwritten by loadQuestions/startGame.
+        if questions.isEmpty && infoViewModel.currentQuestionText.contains("Error") {
+             // Keep the error message
+        } else {
+            infoViewModel.currentQuestionText = "Game Over!"
+        }
         infoViewModel.gameMessage = "Final Score: \(infoViewModel.score)"
         // Optionally, navigate to a game over screen or show a prominent UI message
         print("GAME OVER. Final Score: \(infoViewModel.score)")
     }
-
-    // This function is no longer strictly needed if SCNBillboardConstraint is used on text.
-    // Kept for reference if manual orientation was ever required.
-    // func updateActiveAnswerZoneTextOrientations() {
-    //     guard let cameraNode = cameraNode else { return }
-    //     let cameraPosition = cameraNode.presentation.worldPosition
-    //     activeAnswerZones.forEach { zone in
-    //         // zone.makeTextFaceCamera(cameraPosition: cameraPosition) // If AnswerZoneNode had this method
-    //     }
-    // }
 }
