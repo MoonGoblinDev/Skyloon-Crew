@@ -8,12 +8,10 @@ class AnswerZoneNode: SCNNode {
     private var textNode: SCNNode!
     private var sphereNode: SCNNode!
 
-    // Updated Sizes:
-    static let sphereRadius: CGFloat = 15.0     // Increased from 5.0
-    static let textFontSize: CGFloat = 7.0      // Increased from 3.0
-    static let textExtrusionDepth: CGFloat = 1.0 // Increased from 0.5
-    // This will be the gap between the top of the sphere and the bottom of the text
-    static let textGapAboveSphere: Float = 3.0   // New, was textVerticalOffset = 1.5 (conceptually different)
+    static let sphereRadius: CGFloat = 15.0
+    static let textFontSize: CGFloat = 16.0
+    static let textExtrusionDepth: CGFloat = 1.0
+    static let textGapAboveSphere: Float = 3.0
 
     init(answerText: String, isCorrect: Bool, color: NSColor, position: SCNVector3) {
         self.answerText = answerText
@@ -44,7 +42,7 @@ class AnswerZoneNode: SCNNode {
         // Create 3D Text
         let textGeometry = SCNText(string: answerText, extrusionDepth: AnswerZoneNode.textExtrusionDepth)
         textGeometry.font = NSFont.systemFont(ofSize: AnswerZoneNode.textFontSize, weight: .heavy) // Bolder for visibility
-        textGeometry.firstMaterial?.diffuse.contents = NSColor.white
+        textGeometry.firstMaterial?.diffuse.contents = NSColor.black
         textGeometry.firstMaterial?.lightingModel = .constant
         textGeometry.firstMaterial?.isDoubleSided = true
 
@@ -60,8 +58,6 @@ class AnswerZoneNode: SCNNode {
         textNode.name = "AnswerText"
         
         // Position text above the sphere
-        // SCNText's pivot is at its baseline-center. minBounds.y is usually negative or 0.
-        // We want the lowest point of the text to be `textGapAboveSphere` units above the sphere's top.
         let (minBounds, _) = textGeometry.boundingBox
         let textBaselineYPosition = Float(AnswerZoneNode.sphereRadius) + AnswerZoneNode.textGapAboveSphere - Float(minBounds.y)
         

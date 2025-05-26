@@ -10,7 +10,7 @@ struct HealthDisplayView: View {
             ForEach(0..<maxHealth, id: \.self) { index in
                 Image(systemName: index < currentHealth ? "heart.fill" : "heart")
                     .foregroundColor(index < currentHealth ? .red : .gray)
-                    .font(.title2) // Adjust size as needed
+                    .font(.system(size: 30, weight: .bold))
             }
         }
     }

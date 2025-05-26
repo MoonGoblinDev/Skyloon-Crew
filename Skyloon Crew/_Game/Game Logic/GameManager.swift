@@ -4,7 +4,7 @@ import Combine
 
 class GameManager {
     weak var scene: SCNScene?
-    weak var boatNode: SCNNode? // Still useful for subsequent questions
+    weak var boatNode: SCNNode?
     weak var cameraNode: SCNNode?
     var infoViewModel: InfoViewModel
 
@@ -133,8 +133,6 @@ class GameManager {
             spawnRefPos = initialPos
             
             // Calculate forward and right vectors from the initial orientation
-            // SCNNode's orientation directly gives world orientation if it's a root node or if its parent has identity transform.
-            // For precise calculation from quaternion without a node in scene:
             let q = initialOri
             boatWorldForward = SCNVector3(2 * (q.x * q.z + q.w * q.y),
                                           2 * (q.y * q.z - q.w * q.x),

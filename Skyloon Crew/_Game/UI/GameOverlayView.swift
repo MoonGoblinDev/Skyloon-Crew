@@ -41,7 +41,7 @@ struct GameOverlayView: View {
                 .padding(.bottom, basePadding * 0.25) // Less padding if space is tight
                 
                 Text(viewModel.currentQuestionText)
-                    .font(.headline)
+                    .font(.system(size: 50, weight: .bold))
                     .minimumScaleFactor(0.6)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -54,7 +54,7 @@ struct GameOverlayView: View {
                 
                 HStack {
                     Text("Score: \(viewModel.score)")
-                        .font(.title2)
+                        .font(.system(size: 30, weight: .bold))
                         .minimumScaleFactor(0.7)
                         .foregroundColor(.white)
                         .padding(infoBoxPadding * 0.8) // Slightly smaller padding for these
@@ -64,7 +64,7 @@ struct GameOverlayView: View {
                     Spacer()
                     
                     Text("Time: \(viewModel.timeLeft)")
-                        .font(.title3)
+                        .font(.system(size: 30, weight: .bold))
                         .minimumScaleFactor(0.7)
                         .foregroundColor(viewModel.timeLeft <= 10 ? .red : .yellow)
                         .padding(infoBoxPadding * 0.8)

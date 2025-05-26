@@ -11,18 +11,18 @@ class BoatController: NSObject {
     var boatNode: SCNNode
     var cameraNode: SCNNode // This is the node with the SCNCamera component
     
-    private var cameraPivotNode: SCNNode! // New: A pivot node for smooth camera transforms
+    private var cameraPivotNode: SCNNode! //A pivot node for smooth camera transforms
     
     // Camera follow settings
     private let cameraDistance: Float = 15.0
     private let cameraHeight: Float = 8.0
-    private let cameraPositionSmoothingFactor: Float = 0.1 // Lower value = smoother/slower
-    private let cameraOrientationSmoothingFactor: Float = 0.05 // Lower value = smoother/slower
+    private let cameraPositionSmoothingFactor: Float = 0.1
+    private let cameraOrientationSmoothingFactor: Float = 0.05
     
     // Physics properties
     private let rotationForce: Float = 30.0
     private let forwardForce: Float = 50.0
-    private let verticalForce: Float = 20.0 // New: Force for up/down movement
+    private let verticalForce: Float = 20.0
     
     // Paddling timer control
     private var canPaddleLeft = true
@@ -32,13 +32,13 @@ class BoatController: NSObject {
     // New: Vertical movement timer control
     private var canMoveUp = true
     private var canMoveDown = true
-    private let verticalMovementInterval: TimeInterval = 0.1 // Similar to paddling
+    private let verticalMovementInterval: TimeInterval = 0.1
     
     // Keep track of key states
     private var leftKeyDown = false
     private var rightKeyDown = false
-    private var upKeyDown = false   // New
-    private var downKeyDown = false // New
+    private var upKeyDown = false
+    private var downKeyDown = false
     
     // MARK: - Initialization
     
@@ -64,7 +64,7 @@ class BoatController: NSObject {
         physicsBody.restitution = 0.2
         physicsBody.angularDamping = 0.1
         physicsBody.damping = 0.1
-        physicsBody.isAffectedByGravity = false // Important for controlled vertical movement
+        physicsBody.isAffectedByGravity = false
         boatNode.physicsBody = physicsBody
     }
     
@@ -108,19 +108,15 @@ class BoatController: NSObject {
     private func handleKeyDown(_ event: NSEvent) -> Bool {
         // Ignore repeated key down events if we are already processing the key
         if event.isARepeat {
-            // For continuous actions triggered by the timer, we don't need to re-trigger on repeat here.
-            // The timer-based repeat handles holding the key.
-            // However, if you wanted an action on *every* OS key repeat event, you'd handle it here.
-            // For now, we only care about the initial press to start the timed action.
             switch event.keyCode {
-            case 123, 124, 125, 126: return true // Consume known repeat events
+            case 123, 124, 125, 126: return true
             default: return false
             }
         }
 
         switch event.keyCode {
         case 123: // Left arrow key
-            if !leftKeyDown { // Process only if not already down (prevents re-triggering from system repeat)
+            if !leftKeyDown {
                 leftKeyDown = true
                 paddleLeft()
             }
@@ -131,13 +127,13 @@ class BoatController: NSObject {
                 paddleRight()
             }
             return true
-        case 126: // Up arrow key (New)
+        case 126: // Up arrow key
             if !upKeyDown {
                 upKeyDown = true
                 ascend()
             }
             return true
-        case 125: // Down arrow key (New)
+        case 125: // Down arrow key
             if !downKeyDown {
                 downKeyDown = true
                 descend()
@@ -156,10 +152,10 @@ class BoatController: NSObject {
         case 124: // Right arrow key
             rightKeyDown = false
             return true
-        case 126: // Up arrow key (New)
+        case 126: // Up arrow key
             upKeyDown = false
             return true
-        case 125: // Down arrow key (New)
+        case 125: // Down arrow key
             downKeyDown = false
             return true
         default:
@@ -190,10 +186,10 @@ class BoatController: NSObject {
         }
     }
 
-    // MARK: - Vertical Movement Controls (New)
+    // MARK: - Vertical Movement Controls
     private func ascend() {
         guard canMoveUp else { return }
-        applyVerticalForce(direction: 1) // Positive direction for up
+        applyVerticalForce(direction: 1)
         canMoveUp = false
         DispatchQueue.main.asyncAfter(deadline: .now() + verticalMovementInterval) { [weak self] in
             self?.canMoveUp = true
@@ -203,7 +199,7 @@ class BoatController: NSObject {
 
     private func descend() {
         guard canMoveDown else { return }
-        applyVerticalForce(direction: -1) // Negative direction for down
+        applyVerticalForce(direction: -1)
         canMoveDown = false
         DispatchQueue.main.asyncAfter(deadline: .now() + verticalMovementInterval) { [weak self] in
             self?.canMoveDown = true
@@ -260,19 +256,12 @@ class BoatController: NSObject {
                 print("Warning: Camera pivot node not available for snapping.")
                 return
             }
-            // No physics body check here, as we want to snap even if physics isn't active
-            // or if we're setting an initial state before physics simulation starts.
-
-            // Use the boatNode's direct transform, not presentation, as we are likely
-            // calling this immediately after setting the boat's transform programmatically.
             let targetPosition = boatNode.worldPosition
             let targetOrientation = boatNode.worldOrientation
 
             pivot.worldPosition = targetPosition
             pivot.worldOrientation = targetOrientation
             
-            // The cameraNode itself is already positioned relative to the pivot,
-            // so updating the pivot is sufficient.
             print("Camera snapped to boat's new position/orientation.")
         }
 
