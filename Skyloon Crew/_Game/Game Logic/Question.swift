@@ -7,8 +7,7 @@ struct Question: Identifiable, Decodable {
     let answers: [String] // All possible answer choices
     let correctAnswer: String // The text of the correct answer
 
-    // Define CodingKeys for the properties that ARE in the JSON.
-    // 'id' is intentionally omitted here because we will generate it manually.
+    
     enum CodingKeys: String, CodingKey {
         case text
         case answers
@@ -24,7 +23,7 @@ struct Question: Identifiable, Decodable {
         self.answers = try container.decode([String].self, forKey: .answers)
         self.correctAnswer = try container.decode(String.self, forKey: .correctAnswer)
         
-        // Manually initialize 'id' as it's not in the JSON
+        
         self.id = UUID()
 
         // Perform validation after decoding all necessary fields

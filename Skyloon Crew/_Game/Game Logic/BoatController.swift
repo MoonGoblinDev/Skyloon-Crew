@@ -14,8 +14,8 @@ class BoatController: NSObject {
     private var cameraPivotNode: SCNNode! //A pivot node for smooth camera transforms
     
     // Camera follow settings
-    private let cameraDistance: Float = 15.0
-    private let cameraHeight: Float = 8.0
+    private let cameraDistance: Float = 12.0
+    private let cameraHeight: Float = 5.0
     private let cameraPositionSmoothingFactor: Float = 0.1
     private let cameraOrientationSmoothingFactor: Float = 0.05
     
