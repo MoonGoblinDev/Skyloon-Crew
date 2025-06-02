@@ -14,4 +14,25 @@ struct PlayerWrap: Codable {
     var id = UUID()
     var name: String
     var colorHex: String
+    var character: String
 }
+
+
+enum CharactersEnum: String, CaseIterable{
+    case black_bear = "Black Bear";
+    case panda = "Panda";
+    case brown_bear = "Brown Bear";
+    case polar_bear = "Polar Bear";
+    case red_bear = "Red Bear";
+    case koala = "Koala";
+    
+    func getImage() -> String {
+        switch self {
+            case .panda:
+            return "character_panda"
+        default:
+            return "character_bear"
+        }
+    }
+}
+

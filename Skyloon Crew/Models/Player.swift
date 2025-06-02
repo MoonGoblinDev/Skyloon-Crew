@@ -1,21 +1,21 @@
 // Challenge2/Models/Player.swift
 import Foundation
 import MultipeerConnectivity
-import SwiftUI // For Color, if needed here, otherwise remove
-
-// Assuming GyroData is defined as you provided
+import SwiftUI
 
 class Player: Identifiable, ObservableObject {
     let id = UUID()
     var playerNumber: Int
     var playerName: String
     var playerColorHex: String
+    var character: String
     var peerID: MCPeerID
+    
     @Published var deviceName: String
     @Published var connectionState: ConnectionState
     @Published var currentGyroData: GyroData
     @Published var lastDetectedMotion: String?
-    @Published var lastMotionData: [Double] = [] // Used for general motion data history if needed
+    @Published var lastMotionData: [Double] = []
     @Published var totalSwing = 0
 
     var boatController: BoatController?
@@ -52,7 +52,7 @@ class Player: Identifiable, ObservableObject {
 
     private var isSwingCooldownActive = false
 
-    init(playerNumber: Int, playerName: String, playerColorHex: String, peerID: MCPeerID, deviceName: String = "", connectionState: ConnectionState = .disconnected, lastDetectedMotion: String? = "Idle", boatController: BoatController? = nil) {
+    init(playerNumber: Int, playerName: String, playerColorHex: String, peerID: MCPeerID, deviceName: String = "", connectionState: ConnectionState = .disconnected, lastDetectedMotion: String? = "Idle", boatController: BoatController? = nil, character: CharactersEnum = .panda) {
         self.playerNumber = playerNumber
         self.playerName = playerName
         self.playerColorHex = playerColorHex
@@ -62,6 +62,7 @@ class Player: Identifiable, ObservableObject {
         self.currentGyroData = GyroData()
         self.lastDetectedMotion = lastDetectedMotion
         self.boatController = boatController
+        self.character = character.rawValue
     }
 
     func processMotionDataForSwing(data: GyroData) {
@@ -131,7 +132,6 @@ class Player: Identifiable, ObservableObject {
                 totalSwing += 1
                 lastDetectedMotion = "\(type) Swing (\(totalSwing))"
                 print("Player \(playerName) (P\(playerNumber)) --- \(type) UP-TO-DOWN SWING DETECTED! --- Total: \(totalSwing)")
-                // ... (print details) ...
                 performSwingAction()
                 startCooldown()
                 isMonitoringSwing = false
@@ -162,35 +162,15 @@ class Player: Identifiable, ObservableObject {
             self.isSwingCooldownActive = false
         }
     }
-
-    // This method is for maintaining a general history of some specific motion data point.
-    // It NO LONGER performs its own swing detection.
-    // The `newData` could be, for example, just the pitch, or just acceleration magnitude,
-    // if you want to display a simple graph of that single value over time.
-    func addMotionData(_ newData: Double) {
-        // Manage the lastMotionData array (e.g., for UI display of recent values)
-        if lastMotionData.count >= maxMotionDataSaved { // `maxMotionDataSaved` is used here
-            lastMotionData.removeFirst()
-        }
-        lastMotionData.append(newData)
-        // print("Player \(self.playerName): Added \(newData) to lastMotionData. Count: \(lastMotionData.count)")
-    }
-
+    
     // This is the primary entry point for new motion data from the device.
     func updateGyroData(_ data: GyroData) {
         // Process the full GyroData for the specific "up-to-down swing" detection
         self.processMotionDataForSwing(data: data)
 
-        // If you still want to populate `lastMotionData` with a specific value from GyroData
-        // (e.g., for a simple UI graph), you can call `addMotionData` here.
-        // For example, to keep a history of pitch:
-        // self.addMotionData(data.pitch)
-        // Or for user acceleration magnitude (ensure units are consistent with what `addMotionData` expects):
-        // self.addMotionData(data.accelerationMagnitude)
     }
 
     static func samplePlayers() -> [Player] {
-        // ... (your existing samplePlayers code) ...
         return [
             Player(playerNumber: 1, playerName: "A", playerColorHex: "#FF0000", peerID: MCPeerID(displayName: "iPhone 15"), deviceName: "Player 1 iPhone", connectionState: .connected, lastDetectedMotion: "Smash", boatController: nil),
             Player(playerNumber: 2, playerName: "B", playerColorHex: "#0000FF", peerID: MCPeerID(displayName: "iPhone 14"), deviceName: "Player 2 iPhone", connectionState: .connected, lastDetectedMotion: "Idle", boatController: nil),

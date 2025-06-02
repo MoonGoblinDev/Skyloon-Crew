@@ -102,7 +102,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         self.scene.background.contents = "Skybox1"
         sceneView.scene = scene
         sceneView.allowsCameraControl = false
-        sceneView.showsStatistics = true
+        sceneView.showsStatistics = false
 
         if let boat = scene.rootNode.childNode(withName: "Boat", recursively: true) {
              self.boatNode = boat
@@ -215,7 +215,6 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     // MARK: - Game Restart Logic
 
     private func prepareForNewGameSceneState() {
-        // ... (existing implementation)
         guard let boat = self.boatNode, let boatCtrl = self.boatController else {
             print("Error: Boat node or controller not available for scene reset.")
             return
@@ -234,7 +233,6 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     }
 
     private func triggerFullGameRestart() {
-        // ... (existing implementation)
         print("Triggering full game restart...")
         self.prepareForNewGameSceneState()
         self.gameManager.startGame(
@@ -261,7 +259,6 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
 
     // Method to update player-specific boat controllers (existing)
     private func updatePlayerBoatControllers(with players: [Player]) {
-        // ... (existing implementation)
         guard let boatCtrl = self.boatController else {
             print("BoatController not yet initialized. Will assign on next player update or after setupBoat.")
             return
@@ -406,10 +403,4 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     }
 }
 
-extension SCNVector3 {
-    static func cross(_ vector1: SCNVector3, _ vector2: SCNVector3) -> SCNVector3 {
-        return SCNVector3Make(vector1.y * vector2.z - vector1.z * vector2.y,
-                              vector1.z * vector2.x - vector1.x * vector2.z,
-                              vector1.x * vector2.y - vector1.y * vector2.x)
-    }
-}
+

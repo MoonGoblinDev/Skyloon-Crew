@@ -38,17 +38,18 @@ struct PlayerColumnView: View {
 
             VStack(alignment: .center, spacing: verticalSpacing) {
                 // Player Name Box
-                RoundedRectangle(cornerRadius: nameBoxCornerRadius)
-                    .strokeBorder(Color(hex: player.playerColorHex)!, lineWidth: nameBoxLineWidth)
-                    .background(RoundedRectangle(cornerRadius: nameBoxCornerRadius).fill(Color.white.opacity(0.9)))
-                    .frame(width: availableWidth * 0.9, height: nameBoxHeight)
+                Image("UI_Panel_Window_Blank" )
+                    .resizable(
+                        capInsets: EdgeInsets(top: 29, leading: 29, bottom: 29, trailing: 29),
+                        resizingMode: .stretch
+                        )
+                    .frame(width: availableWidth * 0.9, height: nameBoxHeight * 0.5)
                     .overlay {
-                        Text(player.playerName)
-                            .font(.system(size: nameFontSize, weight: .medium, design: .rounded))
+                        Text.gameFont(player.playerName)
                             .minimumScaleFactor(0.5).lineLimit(1)
                             .foregroundColor(.black)
-                            .padding(.horizontal, nameFontSize * 0.2)
                     }
+                    .padding()
                 
                 // Bear Model
                 let colorToShow = player.connectionState == .connected ? Color(hex: player.playerColorHex)! : .black.opacity(0.7)
@@ -70,8 +71,21 @@ struct PlayerColumnView: View {
                     )
                     .frame(minHeight: statusHeight * 0.8, maxHeight: statusHeight) // Give status text flexible height within its slot
             }
-            .frame(width: geometry.size.width, height: geometry.size.height) // Center content in GeometryReader
-            // .position(x: geometry.size.width / 2, y: geometry.size.height / 2) // Alternative centering
+            .frame(width: geometry.size.width, height: geometry.size.height) 
         }
+    }
+}
+
+struct PlayerColumnView_Preview: PreviewProvider {
+    static var previews: some View {
+        let manager = ConnectionManager()
+        // Add sample players for preview if needed
+        // manager.players = Player.samplePlayers()
+        WaitingForPlayerView(connectionManager: manager, navigateToGame: { })
+            .frame(width: 900, height: 700).previewDisplayName("900x700")
+        WaitingForPlayerView(connectionManager: manager, navigateToGame: { })
+            .frame(width: 1200, height: 800).previewDisplayName("1200x800")
+        WaitingForPlayerView(connectionManager: manager, navigateToGame: { })
+            .frame(width: 600, height: 900).previewDisplayName("600x900 (Tall)")
     }
 }

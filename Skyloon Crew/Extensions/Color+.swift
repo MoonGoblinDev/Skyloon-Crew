@@ -5,7 +5,15 @@
 //  Created by Reza Juliandri on 22/05/25.
 //
 import SwiftUI
-import AppKit // Import AppKit for NSColor
+#if canImport(UIKit)
+import UIKit
+typealias AssetImageTypeAlias = UIImage
+typealias AssetColorTypeAlias = UIColor
+#elseif canImport(AppKit)
+import AppKit
+typealias AssetImageTypeAlias = NSImage
+typealias AssetColorTypeAlias = NSColor
+#endif
 
 extension Color {
     // Convert Color to Hex String
@@ -78,5 +86,48 @@ extension Color {
             return nil // Invalid hex length
         }
         self.init(red: Double(r), green: Double(g), blue: Double(b), opacity: Double(a))
+    }
+}
+
+extension AssetImageTypeAlias {
+    func colored(_ color: AssetColorTypeAlias) -> AssetImageTypeAlias {
+        #if canImport(UIKit)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { context in
+            color.setFill()
+            draw(at: .zero)
+            context.fill(CGRect(origin: .zero, size: size), blendMode: .sourceAtop)
+        }
+        #elseif canImport(AppKit)
+        let newImage = self.copy() as! NSImage
+        newImage.lockFocus()
+        color.setFill()
+        let imageRect = NSRect(origin: .zero, size: size)
+        imageRect.fill(using: .sourceAtop)
+        newImage.unlockFocus()
+        return newImage
+        #endif
+    }
+}
+
+// MARK: - SwiftUI Image Configuration
+
+import SwiftUI
+
+extension Image {
+    static func configure(image: AssetImageTypeAlias, tintColor: Color, fill: Bool = true, width: CGFloat? = nil, height: CGFloat? = nil) -> some View {
+        #if canImport(UIKit)
+        return Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: fill ? .fill : .fit)
+            .colorMultiply(tintColor)
+            .frame(width: width, height: height)
+        #elseif canImport(AppKit)
+        return Image(nsImage: image)
+            .resizable()
+            .aspectRatio(contentMode: fill ? .fill : .fit)
+            .colorMultiply(tintColor)
+            .frame(width: width, height: height)
+        #endif
     }
 }
