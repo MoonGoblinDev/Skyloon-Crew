@@ -17,11 +17,6 @@ struct PlayerColumnView: View {
             let nameBoxHeight = totalHeight * nameBoxHeightRatio
             let modelHeight = totalHeight * modelHeightRatio
             let statusHeight = totalHeight * statusHeightRatio
-
-            // Calculate font sizes and paddings based on element heights or available width
-            let nameFontSize = max(10, min(nameBoxHeight * 0.45, availableWidth * 0.12))
-            let nameBoxCornerRadius = nameBoxHeight * 0.3
-            let nameBoxLineWidth = max(1.5, nameBoxHeight * 0.08)
             
             let modelTargetWidth = modelHeight * (2.0/3.0)
             let modelRenderWidth = min(availableWidth * 0.90, modelTargetWidth) // Don't exceed column width

@@ -1,5 +1,5 @@
 // GameLogic/PhysicsCategory.swift
-import Foundation // Not strictly needed for this struct, but good practice
+import Foundation 
 
 struct PhysicsCategory {
     static let none       : Int = 0       // No category / Do not collide

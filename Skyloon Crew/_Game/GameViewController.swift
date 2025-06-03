@@ -110,10 +110,10 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             fatalError("Failed to load Main Scene.scn")
         }
         self.scene = scene
-        self.scene.background.contents = "Skybox1" // Or your preferred skybox for in-game
+        self.scene.background.contents = "Skybox1"
         sceneView.scene = scene
-        sceneView.allowsCameraControl = false // Set to true for debugging camera if needed
-        sceneView.showsStatistics = false // Set to true for debugging performance
+        sceneView.allowsCameraControl = false
+        sceneView.showsStatistics = false
 
         if let boat = scene.rootNode.childNode(withName: "Boat", recursively: true) {
              self.boatNode = boat

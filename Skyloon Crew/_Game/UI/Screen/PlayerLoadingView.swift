@@ -18,8 +18,6 @@ struct WaitingForPlayerView: View {
             let columnHeight = geometry.size.height * 0.55 // Columns take up a good portion of height
 
             let startButtonFontSize = max(18, min(geometry.size.width * 0.03, geometry.size.height * 0.04))
-            let startButtonCornerRadius = startButtonFontSize * 0.5
-            let bottomPaddingForButton = geometry.size.height * 0.05
 
             ZStack {
                 Color.black.opacity(0)
