@@ -2,6 +2,7 @@
 import Foundation
 import MultipeerConnectivity
 import SwiftUI
+import SceneKit // << ADD SceneKit import
 
 class Player: Identifiable, ObservableObject {
     let id = UUID()
@@ -19,6 +20,7 @@ class Player: Identifiable, ObservableObject {
     @Published var totalSwing = 0
 
     var boatController: BoatController?
+    weak var assignedWingNode: SCNNode? // << ADDED
 
     // --- Swing Detection State ---
     private var isMonitoringSwing: Bool = false
@@ -76,9 +78,10 @@ class Player: Identifiable, ObservableObject {
 
         let currentPitch = data.pitch
         let currentUserAccelMag = data.accelerationMagnitude
-        let currentPrimaryRotationRate = abs(data.rotationX)
+        let currentPrimaryRotationRate = abs(data.rotationX) // Assuming rotationX is primary for paddle swing direction
 
         if !isMonitoringSwing {
+            // Check for potential start of a swing
             let isUpOrientation = currentPitch > PITCH_UP_THRESHOLD_MIN && currentPitch < PITCH_UP_THRESHOLD_MAX
             let isFastMotionTrigger = currentUserAccelMag > FAST_SWING_ACCELERATION_TRIGGER_THRESHOLD ||
                                       currentPrimaryRotationRate > FAST_SWING_ROTATION_RATE_TRIGGER_THRESHOLD
@@ -91,10 +94,12 @@ class Player: Identifiable, ObservableObject {
                 timeOfPotentialStart = data.timestamp
                 maxUserAccelerationMagnitudeDuringSwing = currentUserAccelMag
                 maxPrimaryRotationRateDuringSwing = currentPrimaryRotationRate
+                // print("Player \(playerName): Potential swing start. Pitch: \(String(format: "%.2f", currentPitch)), AccelMag: \(String(format: "%.2f", currentUserAccelMag)), RotRate: \(String(format: "%.2f", currentPrimaryRotationRate))")
             }
         } else {
+            // Monitor ongoing potential swing
             guard let startTime = timeOfPotentialStart else {
-                isMonitoringSwing = false
+                isMonitoringSwing = false // Should not happen if isMonitoringSwing is true
                 return
             }
 
@@ -102,15 +107,20 @@ class Player: Identifiable, ObservableObject {
             maxUserAccelerationMagnitudeDuringSwing = max(maxUserAccelerationMagnitudeDuringSwing, currentUserAccelMag)
             maxPrimaryRotationRateDuringSwing = max(maxPrimaryRotationRateDuringSwing, currentPrimaryRotationRate)
 
-            if elapsedTime > SLOW_SWING_MAX_DURATION {
+            // Timeout for swing detection
+            if elapsedTime > SLOW_SWING_MAX_DURATION { // Use the longest possible duration as a hard timeout
+                // print("Player \(playerName): Swing timed out. Elapsed: \(String(format: "%.2f", elapsedTime))s")
                 isMonitoringSwing = false
                 return
             }
 
+            // Check for swing completion criteria
             let pitchChange = pitchAtPotentialStart - currentPitch
             let endedReasonablyDown = currentPitch < PITCH_DOWN_THRESHOLD_MAX
+
             var detectedSwingType: String? = nil
 
+            // Fast Swing detection
             if elapsedTime <= FAST_SWING_MAX_DURATION &&
                pitchChange >= FAST_SWING_MIN_PITCH_CHANGE &&
                endedReasonablyDown &&
@@ -119,6 +129,7 @@ class Player: Identifiable, ObservableObject {
                maxPrimaryRotationRateDuringSwing >= FAST_SWING_ROTATION_RATE_TRIGGER_THRESHOLD {
                 detectedSwingType = "FAST"
             }
+            // Slow Swing detection (else if to ensure only one type is picked)
             else if elapsedTime <= SLOW_SWING_MAX_DURATION &&
                     pitchChange >= SLOW_SWING_MIN_PITCH_CHANGE &&
                     endedReasonablyDown &&
@@ -128,14 +139,18 @@ class Player: Identifiable, ObservableObject {
                 detectedSwingType = "SLOW"
             }
 
+
             if let type = detectedSwingType {
                 totalSwing += 1
-                lastDetectedMotion = "\(type) Swing (\(totalSwing))"
+                DispatchQueue.main.async { // Ensure UI updates are on main thread
+                    self.lastDetectedMotion = "\(type) Swing (\(self.totalSwing))"
+                }
                 print("Player \(playerName) (P\(playerNumber)) --- \(type) UP-TO-DOWN SWING DETECTED! --- Total: \(totalSwing)")
-                performSwingAction()
+                performSwingAction() // This will now include wing animation
                 startCooldown()
-                isMonitoringSwing = false
-            } else if pitchChange < -0.35 {
+                isMonitoringSwing = false // Reset for next swing
+            } else if pitchChange < -0.35 { // Abort if pitch goes up significantly (reset)
+                // print("Player \(playerName): Swing aborted (pitch went up). PitchChange: \(String(format: "%.2f", pitchChange))")
                 isMonitoringSwing = false
             }
         }
@@ -144,22 +159,50 @@ class Player: Identifiable, ObservableObject {
     private func performSwingAction() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            // ... (boat controller logic) ...
+            
+            // Boat movement logic
             if let controller = self.boatController {
-                if self.playerNumber == 1 || self.playerNumber == 3 {
+                if self.playerNumber == 1 || self.playerNumber == 3 { // Left side players
                     controller.paddleLeft()
-                } else if self.playerNumber == 2 || self.playerNumber == 4 {
+                } else if self.playerNumber == 2 || self.playerNumber == 4 { // Right side players
                     controller.paddleRight()
                 }
             }
+
+            // Wing animation logic
+            guard let wingNode = self.assignedWingNode else {
+                // print("Player \(self.playerName) has no assigned wing node for animation.")
+                return
+            }
+
+            let animationDuration: TimeInterval = 0.25 // Duration for one way rotation
+            let rotationAngle = CGFloat.pi / 6 // 30 degrees
+
+            // Action to rotate wing out
+            let rotateOutAction = SCNAction.rotate(by: rotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
+            rotateOutAction.timingMode = .easeInEaseOut
+
+            // Action to rotate wing back in
+            let rotateInAction = SCNAction.rotate(by: -rotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
+            rotateInAction.timingMode = .easeInEaseOut
+
+            // Sequence the actions
+            let wingAnimation = SCNAction.sequence([rotateOutAction, rotateInAction])
+
+            // Run the animation, using a key to prevent multiple overlapping animations if called rapidly
+            // (though swing cooldown should prevent this)
+            wingNode.runAction(wingAnimation, forKey: "wingPaddleAnimationPlayer\(self.playerNumber)")
+            // print("Player \(self.playerName) animating wing: \(wingNode.name ?? "Unnamed Wing")")
         }
     }
 
     private func startCooldown() {
         isSwingCooldownActive = true
+        // print("Player \(playerName): Swing cooldown started.")
         DispatchQueue.main.asyncAfter(deadline: .now() + SWING_COOLDOWN_DURATION) { [weak self] in
             guard let self = self else { return }
             self.isSwingCooldownActive = false
+            // print("Player \(self.playerName): Swing cooldown ended.")
         }
     }
     
@@ -167,7 +210,6 @@ class Player: Identifiable, ObservableObject {
     func updateGyroData(_ data: GyroData) {
         // Process the full GyroData for the specific "up-to-down swing" detection
         self.processMotionDataForSwing(data: data)
-
     }
 
     static func samplePlayers() -> [Player] {

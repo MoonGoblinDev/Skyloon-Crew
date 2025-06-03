@@ -45,6 +45,9 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     // Stores deep copies of original materials for each bear model
     private var defaultBearMaterials: [[SCNMaterial]] = Array(repeating: [], count: Constants.maxPlayers)
 
+    // New properties for managing wing models associated with players << ADDED
+    private var playerWingNodes: [SCNNode?] = Array(repeating: nil, count: Constants.maxPlayers)
+
 
     // MARK: - Initializer
     init(connectionManager: ConnectionManager) {
@@ -60,7 +63,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setupScene() // This will now also find and prepare bear nodes
+        setupScene() // This will now also find and prepare bear and wing nodes
         setupBoat()
 
         infoViewModel = InfoViewModel()
@@ -73,7 +76,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
                                   infoViewModel: infoViewModel)
 
         setupSwiftUIOverlay()
-        observeConnectionManager() // This will trigger initial bear appearance update
+        observeConnectionManager() // This will trigger initial bear appearance and wing assignment
 
         sceneView.delegate = self
         scene.physicsWorld.contactDelegate = self
@@ -137,6 +140,27 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
                     // print("Log: Bear\(playerNumber) container node not found directly under Boat node. This slot may not be used visually.")
                 }
             }
+
+            // Find player wing nodes << ADDED SECTION
+            // Path: Boat -> Boat mesh -> Model -> WingX
+            if let boatMeshNode = boatNode.childNode(withName: "Boat Mesh", recursively: false) {
+                if let modelContainerNode = boatMeshNode.childNode(withName: "Model", recursively: false) {
+                    for i in 0..<Constants.maxPlayers {
+                        let playerNumber = i + 1
+                        if let wingNode = modelContainerNode.childNode(withName: "Wing\(playerNumber)", recursively: false) {
+                            self.playerWingNodes[i] = wingNode
+                            print("Found Wing\(playerNumber) node: '\(wingNode.name ?? "Unnamed")' at path: \(wingNode.fullPath())")
+                        } else {
+                            print("Warning: Wing\(playerNumber) node not found under 'Model' container ('\(modelContainerNode.name ?? "Unnamed")'). Searched in: \(modelContainerNode.fullPath())")
+                        }
+                    }
+                } else {
+                    print("Warning: 'Model' container node not found under 'Boat mesh' node ('\(boatMeshNode.name ?? "Unnamed")'). Searched in: \(boatMeshNode.fullPath()). Wing animations might not work.")
+                }
+            } else {
+                print("Warning: 'Boat mesh' node not found directly under 'Boat' node ('\(boatNode.name ?? "Unnamed")'). Searched in: \(boatNode.fullPath()). Wing animations will not work.")
+            }
+
         } else {
             fatalError("Boat node not found in scene for physics setup.")
         }
@@ -230,6 +254,14 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         boat.position = defaultBoatPosition
         boat.orientation = defaultBoatOrientation
         boatCtrl.snapCameraToBoat()
+
+        // Reset wing animations/states if any were ongoing
+        for wingNode in playerWingNodes where wingNode != nil {
+            wingNode?.removeAllActions()
+            // If wings have a specific initial orientation, reset them here.
+            // For now, the animation is relative (rotate by X, then by -X),
+            // so they should return to their SCN file's default orientation.
+        }
     }
 
     private func triggerFullGameRestart() {
@@ -252,7 +284,8 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
                 print("GameVC observed players: [\(playerStates)]")
                 
                 self.updatePlayerBoatControllers(with: updatedPlayers)
-                self.updateBearAppearances(with: updatedPlayers) // New call to update bear models
+                self.updateBearAppearances(with: updatedPlayers)
+                self.assignWingsToPlayers(with: updatedPlayers) // << ADDED CALL
             }
             .store(in: &cancellables)
     }
@@ -357,6 +390,31 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         }
     }
 
+    // Method to assign wing nodes to players << ADDED
+    private func assignWingsToPlayers(with players: [Player]) {
+        for player in players {
+            if player.connectionState == .connected {
+                if player.assignedWingNode == nil { // Assign only if not already assigned
+                    let playerIndex = player.playerNumber - 1 // 0-indexed
+                    if playerIndex >= 0 && playerIndex < self.playerWingNodes.count,
+                       let wingNode = self.playerWingNodes[playerIndex] {
+                        player.assignedWingNode = wingNode
+                        print("Assigned Wing\(player.playerNumber) ('\(wingNode.name ?? "Unnamed")') to \(player.playerName)")
+                    } else {
+                        print("Could not assign wing to \(player.playerName): Wing node for P\(player.playerNumber) (index \(playerIndex)) not found in playerWingNodes array or index out of bounds. Array size: \(self.playerWingNodes.count).")
+                    }
+                }
+            } else { // Player disconnected or not in a connected state
+                if player.assignedWingNode != nil {
+                    print("Unassigning wing from \(player.playerName)")
+                    // Stop any ongoing animation on this wing if the player disconnects
+                    player.assignedWingNode?.removeAction(forKey: "wingPaddleAnimationPlayer\(player.playerNumber)")
+                    player.assignedWingNode = nil
+                }
+            }
+        }
+    }
+
     // MARK: - SCNSceneRendererDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         boatController?.update()
@@ -402,5 +460,3 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         return nil
     }
 }
-
-
