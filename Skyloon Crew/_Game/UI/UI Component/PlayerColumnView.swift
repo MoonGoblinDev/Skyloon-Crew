@@ -54,9 +54,10 @@ struct PlayerColumnView: View {
                 // Bear Model
                 let colorToShow = player.connectionState == .connected ? Color(hex: player.playerColorHex)! : .black.opacity(0.7)
                 BearModelView(playerColor: colorToShow)
-                    .frame(width: modelRenderWidth, height: modelHeight)
+                    .frame(width: modelRenderWidth * 1.4, height: modelHeight)
                     .cornerRadius(modelCornerRadius)
                     .opacity(player.connectionState == .connected ? 1.0 : 0.6) // Dim if not connected
+                    
                 
                 // Status Text
                 Text(player.connectionState == .connected ? "Ready" : "Waiting")

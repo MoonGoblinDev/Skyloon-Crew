@@ -4,8 +4,8 @@ import Foundation
 struct Question: Identifiable, Decodable {
     let id: UUID
     let text: String
-    let answers: [String] // All possible answer choices
-    let correctAnswer: String // The text of the correct answer
+    let answers: [String]
+    let correctAnswer: String 
 
     
     enum CodingKeys: String, CodingKey {

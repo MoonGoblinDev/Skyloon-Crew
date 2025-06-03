@@ -6,7 +6,7 @@ class InfoViewModel: ObservableObject {
     @Published var score: Int = 0
     @Published var health: Int = 3
     @Published var currentQuestionText: String = "Loading question..."
-    @Published var timeLeft: Int = 30 // Example: 30 seconds per question
+    @Published var timeLeft: Int = 30
     @Published var isGameOver: Bool = false
-    @Published var gameMessage: String = "" // For "Correct!" or "Wrong!" messages
+    @Published var gameMessage: String = "" 
 }

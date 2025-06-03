@@ -1,59 +1,6 @@
 import SwiftUI
 import SceneKit
 
-struct BearModelView: View {
-    let playerColor: Color
-    private var scene: SCNScene?
-
-    init(playerColor: Color) {
-        self.playerColor = playerColor
-        if let modelScene = SCNScene(named: "art.scnassets/Bear 2.scn") {
-            self.scene = Self.processScene(modelScene, with: playerColor, animationFileName: "idle.dae", modelPath: "art.scnassets/Bear/Idle.dae")
-        } else {
-            print("Error: Could not load 'Bear/Bear.dae'.")
-            self.scene = nil
-        }
-    }
-
-    private static func processScene(_ modelScene: SCNScene, with swiftUIColor: Color, animationFileName: String, modelPath: String) -> SCNScene? {
-        var nodeToModify: SCNNode? = nil
-        func findMainNode(_ node: SCNNode) -> SCNNode? {
-            if (node.name ?? "").lowercased().contains("armature") { return node }
-            if node.geometry != nil { return node }
-            for child in node.childNodes { if let found = findMainNode(child) { return found } }
-            return nil
-        }
-        nodeToModify = findMainNode(modelScene.rootNode) ?? modelScene.rootNode.childNodes.first ?? modelScene.rootNode
-        guard let finalNodeToModify = nodeToModify else { return modelScene }
-        #if os(macOS)
-        let scnColor = NSColor(swiftUIColor)
-        #else
-        let scnColor = UIColor(swiftUIColor)
-        #endif
-        finalNodeToModify.enumerateHierarchy { (node, _) in
-            if let geometry = node.geometry {
-                geometry.materials.forEach { material in
-                    material.diffuse.contents = scnColor
-                    material.lightingModel = .phong
-                    material.shininess = 2.0
-                }
-            }
-        }
-        return modelScene
-    }
-
-    var body: some View {
-        if let validScene = scene {
-            SceneView(scene: validScene, options: [.rendersContinuously])
-            .background(Color.clear)
-        } else {
-            Text("Error loading 3D model").foregroundColor(.red)
-            .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.gray.opacity(0.2))
-        }
-    }
-}
-
-
 struct WaitingForPlayerView: View {
     @ObservedObject var connectionManager: ConnectionManager
     var navigateToGame: () -> Void
@@ -77,28 +24,55 @@ struct WaitingForPlayerView: View {
             ZStack {
                 Color.black.opacity(0)
                 GameCanvas(title:"Waiting for Player") {
-                    VStack() {
-                        HStack(alignment: .bottom) {
-                            ForEach(connectionManager.players) { player in
-                                PlayerColumnView(player: player)
-                                    .frame(width: columnWidth, height: columnHeight)
+                    HStack() {
+                        Grid(alignment: .top, horizontalSpacing: 0, verticalSpacing: 0) {
+                            GridRow {
+                                PlayerColumnView(player: connectionManager.players[0])
+                                    .frame(width: columnWidth, height: columnHeight - 130)
+                                PlayerColumnView(player: connectionManager.players[1])
+                                    .frame(width: columnWidth, height: columnHeight - 130)
+                            }
+                            GridRow {
+                                PlayerColumnView(player: connectionManager.players[2])
+                                    .frame(width: columnWidth, height: columnHeight - 130)
+                                PlayerColumnView(player: connectionManager.players[3])
+                                    .frame(width: columnWidth, height: columnHeight - 130)
                             }
                         }
                         
-                        GameButton(
-                            state: GameButtonState.grey,
-                            action: {
-                                navigateToGame()
-                                GameSoundManager.shared.playUI(.success)
-                                GameSoundManager.shared.stopBGM(fadeOut: true)
-                            }) {
-                            HStack {
-                                Text.gameFont("Start Adventure", fontSize: startButtonFontSize * 1.4 )
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
+                        VStack {
+                            ZStack {
+                                Image("daw")
+                                    .resizable()
+                                    .frame(maxWidth: columnWidth * 2, maxHeight: columnWidth * 2)
+                                    
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                                    .padding(10)
                             }
+                            .background(
+                                Image("UI_Bar")
+                                    .resizable(
+                                        capInsets: EdgeInsets(top: 29, leading: 29, bottom: 29, trailing: 29),
+                                        resizingMode: .stretch
+                                    )
+                                    
+                            ).padding()
+                            GameButton(
+                                state: GameButtonState.grey,
+                                action: {
+                                    navigateToGame()
+                                    GameSoundManager.shared.playUI(.success)
+                                    GameSoundManager.shared.stopBGM(fadeOut: true)
+                                }) {
+                                    HStack {
+                                        Text.gameFont("Start Adventure", fontSize: startButtonFontSize * 1.4 )
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
 
                     }
                     .padding()
