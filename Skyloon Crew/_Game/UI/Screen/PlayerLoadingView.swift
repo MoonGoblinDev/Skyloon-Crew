@@ -42,7 +42,7 @@ struct WaitingForPlayerView: View {
                         
                         VStack {
                             ZStack {
-                                Image("daw")
+                                Image("QR")
                                     .resizable()
                                     .frame(maxWidth: columnWidth * 2, maxHeight: columnWidth * 2)
                                     

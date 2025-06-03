@@ -23,8 +23,6 @@ struct PlayerColumnView: View {
             let nameBoxCornerRadius = nameBoxHeight * 0.3
             let nameBoxLineWidth = max(1.5, nameBoxHeight * 0.08)
             
-            // For BearModelView, maintain aspect ratio if possible, or fit into allocated space
-            // Let model width be proportional to its height, e.g., 2:3 (width:height)
             let modelTargetWidth = modelHeight * (2.0/3.0)
             let modelRenderWidth = min(availableWidth * 0.90, modelTargetWidth) // Don't exceed column width
             let modelCornerRadius = modelRenderWidth * 0.1
@@ -38,6 +36,7 @@ struct PlayerColumnView: View {
 
             VStack(alignment: .center, spacing: verticalSpacing) {
                 // Player Name Box
+                
                 Image("UI_Panel_Window_Blank" )
                     .resizable(
                         capInsets: EdgeInsets(top: 29, leading: 29, bottom: 29, trailing: 29),

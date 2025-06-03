@@ -130,7 +130,7 @@ struct MenuButton: View {
                             capInsets: EdgeInsets(top: 14, leading: 14, bottom: 18, trailing: 14),
                             resizingMode: .stretch
                         )
-                        .frame(width: 200)
+                        .frame(width: 400)
                 )
                 .scaleEffect(isPressed ? 0.95 : 1.0)
         }

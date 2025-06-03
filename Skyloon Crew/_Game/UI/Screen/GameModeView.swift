@@ -165,7 +165,6 @@ struct MapContentView: View {
                             .padding(.horizontal, geometry.size.width * 0.02)
                             .frame(maxWidth: geometry.size.width * 0.9)
                         }
-                        .animation(.easeInOut, value: gameMode.id)
                         
                     } else {
                         Text("Select a game mode from the left.")

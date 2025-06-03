@@ -2,7 +2,7 @@
 import Foundation
 import MultipeerConnectivity
 import SwiftUI
-import SceneKit // << ADD SceneKit import
+import SceneKit
 
 class Player: Identifiable, ObservableObject {
     let id = UUID()
@@ -31,7 +31,7 @@ class Player: Identifiable, ObservableObject {
 
     // --- Thresholds & Constants ---
     private let maxMotionDataSaved = 100 // For the `lastMotionData` array
-    private let SWING_COOLDOWN_DURATION: TimeInterval = 1.0
+    private let SWING_COOLDOWN_DURATION: TimeInterval = 0
 
     // Start Conditions
     private let PITCH_UP_THRESHOLD_MIN: Double = 0.4
@@ -176,16 +176,22 @@ class Player: Identifiable, ObservableObject {
             }
 
             let animationDuration: TimeInterval = 0.25 // Duration for one way rotation
-            let rotationAngle = CGFloat.pi / 6 // 30 degrees
+            var effectiveRotationAngle = CGFloat.pi / 6 // 30 degrees. This is the base "outward" rotation.
+
+            // If playerNumber is 2 or 4, swap the rotation direction for mirrored animation
+            if self.playerNumber == 2 || self.playerNumber == 4 {
+                effectiveRotationAngle = -effectiveRotationAngle
+            }
 
             // Action to rotate wing out
-            let rotateOutAction = SCNAction.rotate(by: rotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
+            let rotateOutAction = SCNAction.rotate(by: effectiveRotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
             rotateOutAction.timingMode = .easeInEaseOut
 
-            // Action to rotate wing back in
-            let rotateInAction = SCNAction.rotate(by: -rotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
+            // Action to rotate wing back in (opposite of the "out" rotation)
+            let rotateInAction = SCNAction.rotate(by: -effectiveRotationAngle, around: SCNVector3(0, 0, 1), duration: animationDuration)
             rotateInAction.timingMode = .easeInEaseOut
-
+            
+            
             // Sequence the actions
             let wingAnimation = SCNAction.sequence([rotateOutAction, rotateInAction])
 
@@ -214,10 +220,10 @@ class Player: Identifiable, ObservableObject {
 
     static func samplePlayers() -> [Player] {
         return [
-            Player(playerNumber: 1, playerName: "A", playerColorHex: "#FF0000", peerID: MCPeerID(displayName: "iPhone 15"), deviceName: "Player 1 iPhone", connectionState: .connected, lastDetectedMotion: "Smash", boatController: nil),
-            Player(playerNumber: 2, playerName: "B", playerColorHex: "#0000FF", peerID: MCPeerID(displayName: "iPhone 14"), deviceName: "Player 2 iPhone", connectionState: .connected, lastDetectedMotion: "Idle", boatController: nil),
-            Player(playerNumber: 3, playerName: "C", playerColorHex: "#00FF00", peerID: MCPeerID(displayName: "iPhone 13"), deviceName: "Player 3 iPhone", connectionState: .disconnected, boatController: nil),
-            Player(playerNumber: 4, playerName: "D", playerColorHex: "#FFFF00", peerID: MCPeerID(displayName: "iPhone SE"), deviceName: "Player 4 iPhone", connectionState: .connecting, boatController: nil)
+            Player(playerNumber: 1, playerName: "Bregas", playerColorHex: "#FF0000", peerID: MCPeerID(displayName: "iPhone 15"), deviceName: "Player 1 iPhone", connectionState: .connected, lastDetectedMotion: "Smash", boatController: nil),
+            Player(playerNumber: 2, playerName: "Reza", playerColorHex: "#0000FF", peerID: MCPeerID(displayName: "iPhone 14"), deviceName: "Player 2 iPhone", connectionState: .connected, lastDetectedMotion: "Idle", boatController: nil),
+            Player(playerNumber: 3, playerName: "Verdy", playerColorHex: "#00FF00", peerID: MCPeerID(displayName: "iPhone 13"), deviceName: "Player 3 iPhone", connectionState: .connected, lastDetectedMotion: "Idle", boatController: nil),
+            Player(playerNumber: 4, playerName: "Anastasia", playerColorHex: "#FFFF00", peerID: MCPeerID(displayName: "iPhone SE"), deviceName: "Player 4 iPhone", connectionState: .connected, lastDetectedMotion: "Idle", boatController: nil)
         ]
     }
 }

@@ -45,8 +45,13 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     // Stores deep copies of original materials for each bear model
     private var defaultBearMaterials: [[SCNMaterial]] = Array(repeating: [], count: Constants.maxPlayers)
 
-    // New properties for managing wing models associated with players << ADDED
+    // New properties for managing wing models associated with players
     private var playerWingNodes: [SCNNode?] = Array(repeating: nil, count: Constants.maxPlayers)
+
+    // Action closures to be set by GameSceneRepresentable for GameOverView navigation
+    var onChangeGameModeAction: (() -> Void)?
+    var onBackToTitleAction: (() -> Void)?
+    var onShowLeaderboardAction: (() -> Void)?
 
 
     // MARK: - Initializer
@@ -63,7 +68,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setupScene() // This will now also find and prepare bear and wing nodes
+        setupScene()
         setupBoat()
 
         infoViewModel = InfoViewModel()
@@ -76,10 +81,13 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
                                   infoViewModel: infoViewModel)
 
         setupSwiftUIOverlay()
-        observeConnectionManager() // This will trigger initial bear appearance and wing assignment
+        observeConnectionManager()
 
         sceneView.delegate = self
         scene.physicsWorld.contactDelegate = self
+        
+        // Start gameplay BGM when game view loads
+        GameSoundManager.shared.playBGM(.gameplay, fadeIn: true)
 
         // Initial game start
         triggerFullGameRestart()
@@ -102,10 +110,10 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             fatalError("Failed to load Main Scene.scn")
         }
         self.scene = scene
-        self.scene.background.contents = "Skybox1"
+        self.scene.background.contents = "Skybox1" // Or your preferred skybox for in-game
         sceneView.scene = scene
-        sceneView.allowsCameraControl = false
-        sceneView.showsStatistics = false
+        sceneView.allowsCameraControl = false // Set to true for debugging camera if needed
+        sceneView.showsStatistics = false // Set to true for debugging performance
 
         if let boat = scene.rootNode.childNode(withName: "Boat", recursively: true) {
              self.boatNode = boat
@@ -115,34 +123,24 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
              boat.physicsBody?.categoryBitMask = PhysicsCategory.boat
              boat.physicsBody?.contactTestBitMask = PhysicsCategory.answerZone
 
-            // Find player bear models, store them and their original materials
             for i in 0..<Constants.maxPlayers {
                 let playerNumber = i + 1
-                // "BearX" (e.g., Bear1, Bear2) are container nodes under the Boat
                 if let bearContainerNode = boatNode.childNode(withName: "Bear\(playerNumber)", recursively: false) {
-                    // The actual mesh is expected to be a child of BearX, often named "bear"
                     if let actualBearMesh = findActualBearMeshNode(within: bearContainerNode) {
                         self.playerBearModelNodes[i] = actualBearMesh
-                        // Store deep copies of original materials for resetting
                         if let materials = actualBearMesh.geometry?.materials {
                             self.defaultBearMaterials[i] = materials.map { $0.copy() as! SCNMaterial }
                         } else {
-                            self.defaultBearMaterials[i] = [] // Ensure it's an empty array, not nil
+                            self.defaultBearMaterials[i] = []
                         }
                         print("Found actual bear model for Bear\(playerNumber): '\(actualBearMesh.name ?? "Unnamed")' (path: \(actualBearMesh.fullPath()))")
                     } else {
                         print("Warning: Could not find geometry sub-node within Bear\(playerNumber) container ('\(bearContainerNode.name ?? "Unnamed")'). Path: \(bearContainerNode.fullPath())")
                     }
-                    // Initially hide the BearX container. It will be unhidden when a player connects.
                     bearContainerNode.isHidden = true
-                } else {
-                    // This is not an error if the scene intentionally has fewer bears than maxPlayers
-                    // print("Log: Bear\(playerNumber) container node not found directly under Boat node. This slot may not be used visually.")
                 }
             }
 
-            // Find player wing nodes << ADDED SECTION
-            // Path: Boat -> Boat mesh -> Model -> WingX
             if let boatMeshNode = boatNode.childNode(withName: "Boat Mesh", recursively: false) {
                 if let modelContainerNode = boatMeshNode.childNode(withName: "Model", recursively: false) {
                     for i in 0..<Constants.maxPlayers {
@@ -168,7 +166,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         let ambientLight = SCNNode()
         ambientLight.light = SCNLight()
         ambientLight.light?.type = .ambient
-        ambientLight.light?.intensity = 200 // Adjusted intensity for potentially darker bear materials
+        ambientLight.light?.intensity = 200
         scene.rootNode.addChildNode(ambientLight)
 
         let directionalLight = SCNNode()
@@ -181,18 +179,14 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         scene.rootNode.addChildNode(directionalLight)
     }
 
-    // Helper to find the primary mesh node within a bear container (e.g., BearX -> "bear" (mesh))
     private func findActualBearMeshNode(within containerNode: SCNNode) -> SCNNode? {
-        // 1. Prioritize a direct child named "bear" (case-insensitive) that has geometry.
         if let specificBearNode = containerNode.childNodes.first(where: { $0.name?.lowercased() == "bear" && $0.geometry != nil }) {
             return specificBearNode
         }
-
-        // 2. Fallback: If no "bear" child, search the hierarchy within containerNode for the *first* node with geometry.
         var geometryNode: SCNNode?
         containerNode.enumerateHierarchy { (node, stop) in
             if node.geometry != nil {
-                geometryNode = node // Take the first one found
+                geometryNode = node
                 stop.pointee = true
                 return
             }
@@ -201,38 +195,46 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             print("Log: Did not find specific 'bear' mesh in '\(containerNode.name ?? "Unnamed")'. Using first geometry node found: '\(foundNode.name ?? "Unnamed")' at path \(foundNode.fullPath())")
             return foundNode
         }
-
-        // 3. Further Fallback: If the containerNode itself has geometry (less common for a group node like "BearX").
         if containerNode.geometry != nil {
             print("Log: Did not find 'bear' mesh or any child geometry in '\(containerNode.name ?? "Unnamed")'. Using container itself as it has geometry.")
             return containerNode
         }
-        
-        return nil // No suitable mesh node found
+        return nil
     }
 
     private func setupBoat() {
         guard let boatNode = self.boatNode else {
             fatalError("Failed to find Boat node in scene. It should have been found in setupScene.")
         }
-
         let cameraEntityNode = SCNNode()
         cameraEntityNode.camera = SCNCamera()
         cameraEntityNode.camera?.zFar = 1000
         scene.rootNode.addChildNode(cameraEntityNode)
-
         boatController = BoatController(boatNode: boatNode, cameraNode: cameraEntityNode)
         sceneView.pointOfView = cameraEntityNode
     }
 
     private func setupSwiftUIOverlay() {
-        let overlayView = GameOverlayView(viewModel: infoViewModel, onRestartGame: { [weak self] in
-            self?.triggerFullGameRestart()
-        })
+        let overlayView = GameOverlayView(
+            viewModel: infoViewModel,
+            connectionManager: connectionManager,
+            onRestartGame: { [weak self] in
+                self?.triggerFullGameRestart()
+            },
+            onChangeGameMode: { [weak self] in
+                self?.onChangeGameModeAction?() // Call the closure passed from ContentView
+            },
+            onBackToTitle: { [weak self] in
+                self?.onBackToTitleAction?()   // Call the closure passed from ContentView
+            },
+            onShowLeaderboard: { [weak self] in
+                self?.onShowLeaderboardAction?() // Call the closure passed from ContentView
+            }
+        )
         hostingView = NSHostingView(rootView: overlayView)
         hostingView.frame = sceneView.bounds
         hostingView.autoresizingMask = [.width, .height]
-        hostingView.layer?.backgroundColor = .clear // Ensure overlay doesn't block scene visibility
+        hostingView.layer?.backgroundColor = .clear
         sceneView.addSubview(hostingView)
     }
     
@@ -243,9 +245,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             print("Error: Boat node or controller not available for scene reset.")
             return
         }
-
         print("Preparing scene for new game: Resetting boat state to Pos: \(defaultBoatPosition), Ori: \(defaultBoatOrientation).")
-
         if let physicsBody = boat.physicsBody {
             physicsBody.clearAllForces()
             physicsBody.velocity = SCNVector3Zero
@@ -254,18 +254,14 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         boat.position = defaultBoatPosition
         boat.orientation = defaultBoatOrientation
         boatCtrl.snapCameraToBoat()
-
-        // Reset wing animations/states if any were ongoing
         for wingNode in playerWingNodes where wingNode != nil {
             wingNode?.removeAllActions()
-            // If wings have a specific initial orientation, reset them here.
-            // For now, the animation is relative (rotate by X, then by -X),
-            // so they should return to their SCN file's default orientation.
         }
     }
 
     private func triggerFullGameRestart() {
         print("Triggering full game restart...")
+        GameSoundManager.shared.playBGM(.gameplay, fadeIn: true) // Ensure gameplay BGM plays on restart
         self.prepareForNewGameSceneState()
         self.gameManager.startGame(
             initialBoatPosition: self.defaultBoatPosition,
@@ -279,24 +275,20 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
             .receive(on: DispatchQueue.main)
             .sink { [weak self] updatedPlayers in
                 guard let self = self else { return }
-                // Log player connection states for debugging
                 let playerStates = updatedPlayers.map { "P\($0.playerNumber)-\($0.playerName):\($0.connectionState)" }.joined(separator: ", ")
                 print("GameVC observed players: [\(playerStates)]")
-                
                 self.updatePlayerBoatControllers(with: updatedPlayers)
                 self.updateBearAppearances(with: updatedPlayers)
-                self.assignWingsToPlayers(with: updatedPlayers) // << ADDED CALL
+                self.assignWingsToPlayers(with: updatedPlayers)
             }
             .store(in: &cancellables)
     }
 
-    // Method to update player-specific boat controllers (existing)
     private func updatePlayerBoatControllers(with players: [Player]) {
         guard let boatCtrl = self.boatController else {
             print("BoatController not yet initialized. Will assign on next player update or after setupBoat.")
             return
         }
-
         players.forEach { player in
             if player.connectionState == .connected {
                 if player.boatController == nil {
@@ -312,47 +304,28 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         }
     }
     
-    // New method to update bear model colors and visibility based on player connection
     private func updateBearAppearances(with players: [Player]) {
         guard let boat = self.boatNode else {
             print("Error: Boat node not available for updating bear appearances.")
             return
         }
-
         for i in 0..<Constants.maxPlayers {
-            let playerNumber = i + 1 // Player numbers are 1-based (e.g., 1, 2, 3, 4)
-            
-            // Get the "BearX" container node (e.g., "Bear1", "Bear2")
+            let playerNumber = i + 1
             guard let bearContainerNode = boat.childNode(withName: "Bear\(playerNumber)", recursively: false) else {
-                // This slot might not have a visual representation if scene has fewer bears than maxPlayers
                 continue
             }
-            
-            // Get the actual mesh node for this bear (e.g., the "bear" sub-node with geometry)
             guard let actualBearMeshNode = self.playerBearModelNodes[i] else {
-                // If no mesh node was stored (e.g., findActualBearMeshNode failed), ensure container is hidden.
                 bearContainerNode.isHidden = true
                 continue
             }
-
-            // Check if there is a connected player for this specific playerNumber
             if let player = players.first(where: { $0.playerNumber == playerNumber && $0.connectionState == .connected }) {
-                // Player IS connected for this slot:
-                bearContainerNode.isHidden = false // Make the BearX container visible
-                
+                bearContainerNode.isHidden = false
                 if let playerColor = Color(hex: player.playerColorHex) {
                     let nsPlayerColor = NSColor(playerColor)
-                    
-                    // Check if update is necessary to avoid redundant material changes
                     if !(actualBearMeshNode.geometry?.materials.first?.diffuse.contents as? NSColor == nsPlayerColor) {
-                        // Create new materials based on defaults, then apply player color
-                        // This ensures each player bear has its own material instance.
                         let newMaterials = self.defaultBearMaterials[i].map { originalMaterial -> SCNMaterial in
                             let newPlayerMaterial = originalMaterial.copy() as! SCNMaterial
                             newPlayerMaterial.diffuse.contents = nsPlayerColor
-                            // You might want to adjust other properties like shininess or lighting model here if needed
-                            // e.g., newPlayerMaterial.lightingModel = .phong
-                            //       newPlayerMaterial.shininess = 10.0 (0-128)
                             return newPlayerMaterial
                         }
                         actualBearMeshNode.geometry?.materials = newMaterials
@@ -360,28 +333,20 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
                     }
                 } else {
                     print("Warning: Invalid hex color '\(player.playerColorHex)' for player \(player.playerName). Resetting Bear\(playerNumber) to default materials.")
-                    // If color is invalid, reset to original materials
                     actualBearMeshNode.geometry?.materials = self.defaultBearMaterials[i].map { $0.copy() as! SCNMaterial }
                 }
             } else {
-                // Player is NOT connected for this slot (or player object not found for this number):
-                bearContainerNode.isHidden = true // Hide the BearX container
-                
-                // Reset materials to default if they aren't already
-                // Check by comparing current materials count and first material's diffuse content (simplistic check)
+                bearContainerNode.isHidden = true
                 let currentMaterials = actualBearMeshNode.geometry?.materials ?? []
                 let defaultMaterialsForSlot = self.defaultBearMaterials[i]
-                
                 var needsReset = currentMaterials.count != defaultMaterialsForSlot.count
                 if !needsReset && !currentMaterials.isEmpty && !defaultMaterialsForSlot.isEmpty {
                     if (currentMaterials.first!.diffuse.contents as? NSColor) != (defaultMaterialsForSlot.first!.diffuse.contents as? NSColor) {
                         needsReset = true
                     }
                 } else if currentMaterials.isEmpty && !defaultMaterialsForSlot.isEmpty {
-                     needsReset = true // If current is empty but default isn't, reset
+                     needsReset = true
                 }
-
-
                 if needsReset {
                     actualBearMeshNode.geometry?.materials = defaultMaterialsForSlot.map { $0.copy() as! SCNMaterial }
                     print("Hid Bear\(playerNumber) (mesh: '\(actualBearMeshNode.name ?? "")') and reset its materials (no connected player or player disconnected).")
@@ -390,24 +355,22 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         }
     }
 
-    // Method to assign wing nodes to players << ADDED
     private func assignWingsToPlayers(with players: [Player]) {
         for player in players {
             if player.connectionState == .connected {
-                if player.assignedWingNode == nil { // Assign only if not already assigned
-                    let playerIndex = player.playerNumber - 1 // 0-indexed
+                if player.assignedWingNode == nil {
+                    let playerIndex = player.playerNumber - 1
                     if playerIndex >= 0 && playerIndex < self.playerWingNodes.count,
                        let wingNode = self.playerWingNodes[playerIndex] {
                         player.assignedWingNode = wingNode
                         print("Assigned Wing\(player.playerNumber) ('\(wingNode.name ?? "Unnamed")') to \(player.playerName)")
                     } else {
-                        print("Could not assign wing to \(player.playerName): Wing node for P\(player.playerNumber) (index \(playerIndex)) not found in playerWingNodes array or index out of bounds. Array size: \(self.playerWingNodes.count).")
+                        print("Could not assign wing to \(player.playerName): Wing node for P\(player.playerNumber) (index \(playerIndex)) not found or index out of bounds. Array size: \(self.playerWingNodes.count).")
                     }
                 }
-            } else { // Player disconnected or not in a connected state
+            } else {
                 if player.assignedWingNode != nil {
                     print("Unassigning wing from \(player.playerName)")
-                    // Stop any ongoing animation on this wing if the player disconnects
                     player.assignedWingNode?.removeAction(forKey: "wingPaddleAnimationPlayer\(player.playerNumber)")
                     player.assignedWingNode = nil
                 }
@@ -424,7 +387,6 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         let nodeA = contact.nodeA
         let nodeB = contact.nodeB
-
         var boat: SCNNode?
         var answerZoneSphere: SCNNode?
 
