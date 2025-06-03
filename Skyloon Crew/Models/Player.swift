@@ -162,13 +162,12 @@ class Player: Identifiable, ObservableObject {
             
             // Boat movement logic
             if let controller = self.boatController {
-                if self.playerNumber == 1 || self.playerNumber == 3 { // Left side players
-                    controller.paddleLeft()
-                } else if self.playerNumber == 2 || self.playerNumber == 4 { // Right side players
-                    controller.paddleRight()
-                }
-            }
-
+                            if self.playerNumber == 1 || self.playerNumber == 3 { // Left side players
+                                controller.performLeftPaddleAction() // Use new direct action method
+                            } else if self.playerNumber == 2 || self.playerNumber == 4 { // Right side players
+                                controller.performRightPaddleAction() // Use new direct action method
+                            }
+                        }
             // Wing animation logic
             guard let wingNode = self.assignedWingNode else {
                 // print("Player \(self.playerName) has no assigned wing node for animation.")

@@ -2,9 +2,6 @@ import SceneKit
 import SpriteKit
 import GLKit // Required for GLKQuaternionSlerp
 
-
-
-
 class BoatController: NSObject {
     // MARK: - Properties
     
@@ -24,15 +21,15 @@ class BoatController: NSObject {
     private let forwardForce: Float = 50.0
     private let verticalForce: Float = 20.0
     
-    // Paddling timer control
-    private var canPaddleLeft = true
-    private var canPaddleRight = true
-    private let paddlingInterval: TimeInterval = 0.1
+    // --- REVISED: Timer control for continuous actions ---
+    private var lastPaddleLeftTime: TimeInterval = 0
+    private var lastPaddleRightTime: TimeInterval = 0
+    private var lastMoveUpTime: TimeInterval = 0
+    private var lastMoveDownTime: TimeInterval = 0
     
-    // New: Vertical movement timer control
-    private var canMoveUp = true
-    private var canMoveDown = true
-    private let verticalMovementInterval: TimeInterval = 0.1
+    // Interval for applying actions when keys are held (e.g., 10 times per second)
+    private let actionInterval: TimeInterval = 0.1
+    // --- END REVISED ---
     
     // Keep track of key states
     private var leftKeyDown = false
@@ -62,8 +59,8 @@ class BoatController: NSObject {
         physicsBody.mass = 10.0
         physicsBody.friction = 0.1
         physicsBody.restitution = 0.2
-        physicsBody.angularDamping = 0.1
-        physicsBody.damping = 0.1
+        physicsBody.angularDamping = 1 // Increased slightly, can experiment
+        physicsBody.damping = 0.3        // Increased slightly, can experiment
         physicsBody.isAffectedByGravity = false
         boatNode.physicsBody = physicsBody
     }
@@ -89,125 +86,84 @@ class BoatController: NSObject {
             cameraPivotNode.worldOrientation = boatNode.worldOrientation
         }
     }
-    
-    private func setupKeyHandling() {
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event -> NSEvent? in
-            guard let self = self else { return event }
-            if self.handleKeyDown(event) { return nil }
-            return event
-        }
-        
-        NSEvent.addLocalMonitorForEvents(matching: .keyUp) { [weak self] event -> NSEvent? in
-            guard let self = self else { return event }
-            if self.handleKeyUp(event) { return nil }
-            return event
-        }
-    }
-    
-    // MARK: - Key Handling
-    private func handleKeyDown(_ event: NSEvent) -> Bool {
-        // Ignore repeated key down events if we are already processing the key
-        if event.isARepeat {
-            switch event.keyCode {
-            case 123, 124, 125, 126: return true
-            default: return false
-            }
-        }
 
-        switch event.keyCode {
-        case 123: // Left arrow key
-            if !leftKeyDown {
-                leftKeyDown = true
-                paddleLeft()
+        // --- REVISED: Key Handling ---
+        private func setupKeyHandling() {
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event -> NSEvent? in
+                guard let self = self else { return event }
+                
+                // For arrow keys, we handle continuous action in the update() method.
+                // We consume the initial press and repeats to prevent default system behavior.
+                switch event.keyCode {
+                case 123: // Left arrow key
+                    if !event.isARepeat { // Only set flag on initial press
+                        self.leftKeyDown = true
+                    }
+                    return nil // Consume the event (initial press and repeats)
+                case 124: // Right arrow key
+                    if !event.isARepeat {
+                        self.rightKeyDown = true
+                    }
+                    return nil // Consume the event
+                case 126: // Up arrow key
+                    if !event.isARepeat {
+                        self.upKeyDown = true
+                    }
+                    return nil // Consume the event
+                case 125: // Down arrow key
+                    if !event.isARepeat {
+                        self.downKeyDown = true
+                    }
+                    return nil // Consume the event
+                default:
+                    return event // Not our key, pass it on
+                }
             }
-            return true
-        case 124: // Right arrow key
-            if !rightKeyDown {
-                rightKeyDown = true
-                paddleRight()
+            
+            NSEvent.addLocalMonitorForEvents(matching: .keyUp) { [weak self] event -> NSEvent? in
+                guard let self = self else { return event }
+                switch event.keyCode {
+                case 123: // Left arrow key
+                    self.leftKeyDown = false
+                    return nil // Consume the event
+                case 124: // Right arrow key
+                    self.rightKeyDown = false
+                    return nil // Consume the event
+                case 126: // Up arrow key
+                    self.upKeyDown = false
+                    return nil // Consume the event
+                case 125: // Down arrow key
+                    self.downKeyDown = false
+                    return nil // Consume the event
+                default:
+                    return event // Not our key, pass it on
+                }
             }
-            return true
-        case 126: // Up arrow key
-            if !upKeyDown {
-                upKeyDown = true
-                ascend()
-            }
-            return true
-        case 125: // Down arrow key
-            if !downKeyDown {
-                downKeyDown = true
-                descend()
-            }
-            return true
-        default:
-            return false
         }
-    }
+        // --- END REVISED Key Handling ---
+
+    // ... (rest of BoatController) ...    // --- END REVISED Key Handling ---
     
-    private func handleKeyUp(_ event: NSEvent) -> Bool {
-        switch event.keyCode {
-        case 123: // Left arrow key
-            leftKeyDown = false
-            return true
-        case 124: // Right arrow key
-            rightKeyDown = false
-            return true
-        case 126: // Up arrow key
-            upKeyDown = false
-            return true
-        case 125: // Down arrow key
-            downKeyDown = false
-            return true
-        default:
-            return false
-        }
-    }
-    
-    // MARK: - Paddling Controls
-    public func paddleLeft() {
-        guard canPaddleLeft else { return }
+    // MARK: - Direct Action Methods (for discrete calls, e.g., from Player swings or timed keyboard input)
+    public func performLeftPaddleAction() {
         applyRotation(direction: -1)
         applyForwardForce(paddleSide: .left)
-        canPaddleLeft = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + paddlingInterval) { [weak self] in
-            self?.canPaddleLeft = true
-            if self?.leftKeyDown == true { self?.paddleLeft() }
-        }
     }
     
-    public func paddleRight() {
-        guard canPaddleRight else { return }
+    public func performRightPaddleAction() {
         applyRotation(direction: 1)
         applyForwardForce(paddleSide: .right)
-        canPaddleRight = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + paddlingInterval) { [weak self] in
-            self?.canPaddleRight = true
-            if self?.rightKeyDown == true { self?.paddleRight() }
-        }
     }
 
-    // MARK: - Vertical Movement Controls
-    private func ascend() {
-        guard canMoveUp else { return }
+    public func performAscendAction() {
         applyVerticalForce(direction: 1)
-        canMoveUp = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + verticalMovementInterval) { [weak self] in
-            self?.canMoveUp = true
-            if self?.upKeyDown == true { self?.ascend() }
-        }
     }
 
-    private func descend() {
-        guard canMoveDown else { return }
+    public func performDescendAction() {
         applyVerticalForce(direction: -1)
-        canMoveDown = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + verticalMovementInterval) { [weak self] in
-            self?.canMoveDown = true
-            if self?.downKeyDown == true { self?.descend() }
-        }
     }
     
-    // MARK: - Physics Application
+    // MARK: - Physics Application (Low-level helpers, unchanged)
     
     private func applyRotation(direction: Float) {
         let torque = SCNVector4(0, 1, 0, direction * rotationForce)
@@ -244,9 +200,7 @@ class BoatController: NSObject {
         boatNode.physicsBody?.applyForce(force, asImpulse: true)
     }
 
-    // New: Apply vertical force
     private func applyVerticalForce(direction: Float) {
-        // Force directly along the world Y-axis
         let forceVector = SCNVector3(0, CGFloat(direction * verticalForce), 0)
         boatNode.physicsBody?.applyForce(forceVector, asImpulse: true)
     }
@@ -265,17 +219,44 @@ class BoatController: NSObject {
             print("Camera snapped to boat's new position/orientation.")
         }
 
-    // MARK: - Update Method
+    // MARK: - Update Method (REVISED)
     
-    public func update() {
+    public func update(currentTime: TimeInterval) { // Takes currentTime from renderer
+        // --- Apply physics based on key states and timing ---
+        if leftKeyDown {
+            if currentTime - lastPaddleLeftTime >= actionInterval {
+                performLeftPaddleAction()
+                lastPaddleLeftTime = currentTime
+            }
+        }
+        if rightKeyDown {
+            if currentTime - lastPaddleRightTime >= actionInterval {
+                performRightPaddleAction()
+                lastPaddleRightTime = currentTime
+            }
+        }
+        if upKeyDown {
+            if currentTime - lastMoveUpTime >= actionInterval {
+                performAscendAction()
+                lastMoveUpTime = currentTime
+            }
+        }
+        if downKeyDown {
+            if currentTime - lastMoveDownTime >= actionInterval {
+                performDescendAction()
+                lastMoveDownTime = currentTime
+            }
+        }
+
+        // --- Camera Update Logic (remains the same) ---
         guard let pivot = cameraPivotNode, boatNode.physicsBody != nil else { return }
 
-        let targetPosition = boatNode.presentation.worldPosition
+        let targetPosition = boatNode.presentation.worldPosition // Already using presentation node, good!
         pivot.worldPosition = SCNVector3.lerp(start: pivot.worldPosition,
                                               end: targetPosition,
                                               t: cameraPositionSmoothingFactor)
 
-        let targetOrientation = boatNode.presentation.worldOrientation
+        let targetOrientation = boatNode.presentation.worldOrientation // Already using presentation node, good!
         
         let startQuat = GLKQuaternionMake(Float(pivot.worldOrientation.x),
                                           Float(pivot.worldOrientation.y),

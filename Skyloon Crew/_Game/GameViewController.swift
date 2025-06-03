@@ -380,7 +380,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
 
     // MARK: - SCNSceneRendererDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        boatController?.update()
+        boatController?.update(currentTime: time)
     }
 
     // MARK: - SCNPhysicsContactDelegate

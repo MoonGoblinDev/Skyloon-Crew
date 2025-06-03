@@ -6,7 +6,6 @@ enum ActiveGameScreen: CaseIterable {
     case gameMode
     case playerLoading
     case inGame
-    // case leaderboard // Example: if you add a leaderboard screen
 }
 
 struct ContentView: View {
