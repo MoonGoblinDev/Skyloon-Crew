@@ -23,7 +23,7 @@ struct GameOverView: View {
 
                     HStack(spacing: 15){ // Added spacing for player stats
                         ForEach(connectionManager.players.filter { $0.connectionState == .connected }) { player in // Show only connected players
-                            PlayerStats(name: player.playerName, swing: player.totalSwing, colorHex: player.playerColorHex) // Pass color
+                            PlayerStats(name: player.playerName,character: player.character, swing: player.totalSwing, colorHex: player.playerColorHex) // Pass color
                         }
                     }
                     .padding(.bottom, 20)
@@ -92,6 +92,7 @@ struct GameOverView: View {
 
 struct PlayerStats: View {
     let name: String
+    let character: String
     let swing: Int
     let colorHex: String // Added color
 
@@ -99,7 +100,7 @@ struct PlayerStats: View {
         VStack {
             // Display BearModelView or colored circle
             if let playerUIColor = Color(hex: colorHex) {
-                 BearModelView(playerColor: playerUIColor)
+                BearModelView(character: character)
                     .frame(width: 80, height: 100) // Adjust size as needed
                     .padding()
             } else {
