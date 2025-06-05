@@ -1,0 +1,88 @@
+
+[
+  {
+    "text": "What’s something you can control right now?",
+    "answers": ["Your response", "The weather", "Other people’s thoughts", "Global events"],
+    "correctAnswer": "Your response"
+  },
+  {
+    "text": "What would a kind friend say to you now?",
+    "answers": ["You’re doing your best", "You should try harder", "You failed", "You always mess up"],
+    "correctAnswer": "You’re doing your best"
+  },
+  {
+    "text": "What if this goes better than expected?",
+    "answers": ["I’ll stay open", "It won’t", "I doubt it", "Don’t care"],
+    "correctAnswer": "I’ll stay open"
+  },
+  {
+    "text": "What’s a helpful way to frame a mistake?",
+    "answers": ["A lesson", "Proof I’m dumb", "A disaster", "A waste of time"],
+    "correctAnswer": "A lesson"
+  },
+  {
+    "text": "What’s a useful thing to do when overwhelmed?",
+    "answers": ["Breathe", "Push harder", "Panic", "Quit now"],
+    "correctAnswer": "Breathe"
+  },
+  {
+    "text": "What’s the best next step when stuck?",
+    "answers": ["One small move", "Wait forever", "Complain", "Give up"],
+    "correctAnswer": "One small move"
+  },
+  {
+    "text": "What can a challenge mean?",
+    "answers": ["Growth", "Punishment", "Bad luck", "End of the road"],
+    "correctAnswer": "Growth"
+  },
+  {
+    "text": "What helps you grow after failure?",
+    "answers": ["Reflection", "Blame", "Denial", "Avoidance"],
+    "correctAnswer": "Reflection"
+  },
+  {
+    "text": "What could stress be signaling?",
+    "answers": ["Change is near", "Doom", "Weakness", "Failure"],
+    "correctAnswer": "Change is near"
+  },
+  {
+    "text": "What’s a mindset that fuels learning?",
+    "answers": ["Curiosity", "Perfection", "Comparison", "Pressure"],
+    "correctAnswer": "Curiosity"
+  },
+  {
+    "text": "What’s one way to support yourself now?",
+    "answers": ["Self-talk", "Ignore problems", "Overwork", "Self-criticism"],
+    "correctAnswer": "Self-talk"
+  },
+  {
+    "text": "What’s a brave response to doubt?",
+    "answers": ["Try anyway", "Wait forever", "Quit now", "Avoid it"],
+    "correctAnswer": "Try anyway"
+  },
+  {
+    "text": "What helps you stay grounded?",
+    "answers": ["Breathing", "Multitasking", "Complaining", "Overthinking"],
+    "correctAnswer": "Breathing"
+  },
+  {
+    "text": "What’s a better focus than being perfect?",
+    "answers": ["Being present", "Avoiding errors", "Impressing others", "Hiding"],
+    "correctAnswer": "Being present"
+  },
+  {
+    "text": "What’s a good boundary to set?",
+    "answers": ["Saying no", "Agreeing always", "Avoiding conflict", "Pleasing all"],
+    "correctAnswer": "Saying no"
+  },
+  {
+    "text": "What helps transform pressure into progress?",
+    "answers": ["Reframing", "Panic", "Denial", "Deadline fear"],
+    "correctAnswer": "Reframing"
+  },
+  {
+    "text": "Smiling can actually make you feel happier. What is this effect called?",
+    "answers": ["The facial feedback effect", "The halo effect", "The placebo effect", "The butterfly effect"],
+    "correctAnswer": "The facial feedback effect"
+  }
+]

@@ -11,6 +11,7 @@ enum ActiveGameScreen: CaseIterable {
 struct ContentView: View {
     @StateObject var connectionManager = ConnectionManager()
     @State private var currentScreen: ActiveGameScreen = .start
+    @State private var selectedQuestionFile: String = "questions.json" // Default, can be updated by GameModeView
     private let transitionAnimation: Animation = .easeInOut(duration: 0.4) // Define your preferred animation
 
     var body: some View {
@@ -22,6 +23,7 @@ struct ContentView: View {
                 if currentScreen == .inGame {
                     GameSceneRepresentable(
                         connectionManager: connectionManager,
+                        questionFileName: selectedQuestionFile, // Pass the selected question file
                         onChangeGameModeAction: handleChangeGameMode,
                         onBackToTitleAction: handleBackToTitle,
                         onShowLeaderboardAction: handleShowLeaderboard
@@ -33,6 +35,7 @@ struct ContentView: View {
                 } else {
                     SlidingUIPanel(
                         currentScreen: $currentScreen,
+                        selectedQuestionFile: $selectedQuestionFile, // Pass binding to update the selected file
                         connectionManager: connectionManager,
                         geometry: geometry,
                         transitionAnimation: transitionAnimation
@@ -143,6 +146,7 @@ struct GameSceneRepresentable: NSViewControllerRepresentable {
     typealias NSViewControllerType = GameViewController
 
     let connectionManager: ConnectionManager
+    let questionFileName: String // New: To specify which questions to load
     // Action closures to pass to GameViewController
     let onChangeGameModeAction: () -> Void
     let onBackToTitleAction: () -> Void
@@ -150,8 +154,8 @@ struct GameSceneRepresentable: NSViewControllerRepresentable {
 
 
     func makeNSViewController(context: Context) -> GameViewController {
-        // Pass the connectionManager to your GameViewController's initializer
-        let gameVC = GameViewController(connectionManager: self.connectionManager)
+        // Pass the connectionManager and questionFileName to your GameViewController's initializer
+        let gameVC = GameViewController(connectionManager: self.connectionManager, questionFileName: self.questionFileName)
         // Assign the action closures to the GameViewController instance
         gameVC.onChangeGameModeAction = self.onChangeGameModeAction
         gameVC.onBackToTitleAction = self.onBackToTitleAction
@@ -160,9 +164,11 @@ struct GameSceneRepresentable: NSViewControllerRepresentable {
     }
 
     func updateNSViewController(_ nsViewController: GameViewController, context: Context) {
-        // If the action closures could change during the lifetime of GameSceneRepresentable
+        // If the action closures or questionFileName could change during the lifetime of GameSceneRepresentable
         // (which is unlikely for simple closures passed at init), re-assign them here.
-        // For this setup, makeNSViewController is generally sufficient.
+        // For this setup, makeNSViewController is generally sufficient for action closures.
+        // If questionFileName needs to be updatable while the game is running (e.g. for a dynamic mode change without full reload):
+        // nsViewController.updateQuestionSource(fileName: self.questionFileName) // You would need to implement this in GameVC
          nsViewController.onChangeGameModeAction = self.onChangeGameModeAction
          nsViewController.onBackToTitleAction = self.onBackToTitleAction
          nsViewController.onShowLeaderboardAction = self.onShowLeaderboardAction

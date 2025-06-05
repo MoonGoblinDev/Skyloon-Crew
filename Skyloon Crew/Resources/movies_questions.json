@@ -1,0 +1,57 @@
+[
+  {
+    "text": "What 2023 Australian horror film involves a haunted hand used to communicate with spirits?",
+    "answers": ["Talk to Me", "The Babadook", "Relic", "The Nightingale"],
+    "correctAnswer": "Talk to Me"
+  },
+  {
+    "text": "Which 2018 horror film is centered around a Swedish festival?",
+    "answers": ["Midsommar", "The Witch", "Hereditary", "The Lodge"],
+    "correctAnswer": "Midsommar"
+  },
+  {
+    "text": "In 'The Wailing', what is the profession of the main character?",
+    "answers": ["Police officer", "Shaman", "Farmer", "Teacher"],
+    "correctAnswer": "Police officer"
+  },
+  {
+    "text": "Which 2020 horror film features a Zoom séance gone wrong?",
+    "answers": ["Host", "Unfriended", "The Den", "Friend Request"],
+    "correctAnswer": "Host"
+  },
+  {
+    "text": "In 'Get Out', what is the name of the hypnotic state the protagonist falls into?",
+    "answers": ["The Sunken Place", "The Deep Sleep", "The Void", "The Abyss"],
+    "correctAnswer": "The Sunken Place"
+  },
+  {
+    "text": "Which 2016 horror film is set in 17th-century New England?",
+    "answers": ["The Witch", "The Village", "The Crucible", "Salem"],
+    "correctAnswer": "The Witch"
+  },
+  {
+    "text": "What is the main threat in 'Bird Box'?",
+    "answers": ["Invisible entities", "Zombies", "Aliens", "Vampires"],
+    "correctAnswer": "Invisible entities"
+  },
+  {
+    "text": "In 'Hereditary', what is the name of the demon being summoned?",
+    "answers": ["Paimon", "Baphomet", "Azazel", "Beelzebub"],
+    "correctAnswer": "Paimon"
+  },
+  {
+    "text": "Which 2019 horror film is about a doppelgänger family attacking their counterparts?",
+    "answers": ["Us", "Them", "We", "Ours"],
+    "correctAnswer": "Us"
+  },
+  {
+    "text": "Which 2022 horror film is set in a remote cabin where a family is taken hostage?",
+    "answers": ["Knock at the Cabin", "The Cabin in the Woods", "Hush", "The Strangers"],
+    "correctAnswer": "Knock at the Cabin"
+  },
+  {
+    "text": "Which 2022 Indonesian horror film is a sequel to a remake of a 1980s classic?",
+    "answers": ["Satan’s Slaves 2", "The Queen of Black Magic", "Jailangkung", "The Doll 3"],
+    "correctAnswer": "Satan’s Slaves 2"
+  }
+]

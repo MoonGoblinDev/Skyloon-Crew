@@ -1,0 +1,322 @@
+[
+  {
+    "text": "What’s the capital of France?",
+    "answers": ["Paris", "Berlin", "Madrid", "Rome"],
+    "correctAnswer": "Paris"
+  },
+  {
+    "text": "Which animal is known as “man’s best friend”?",
+    "answers": ["Dog", "Cat", "Hamster", "Parrot"],
+    "correctAnswer": "Dog"
+  },
+  {
+    "text": "What color do you get when you mix red and blue?",
+    "answers": ["Purple", "Green", "Orange", "Yellow"],
+    "correctAnswer": "Purple"
+  },
+  {
+    "text": "What’s the largest mammal?",
+    "answers": ["Blue whale", "Elephant", "Hippo", "Rhino"],
+    "correctAnswer": "Blue whale"
+  },
+  {
+    "text": "What’s the name of the toy cowboy in Toy Story?",
+    "answers": ["Woody", "Buzz", "Rex", "Sid"],
+    "correctAnswer": "Woody"
+  },
+  {
+    "text": "Who wrote Romeo and Juliet?",
+    "answers": ["Shakespeare", "Dickens", "Austen", "Tolkien"],
+    "correctAnswer": "Shakespeare"
+  },
+  {
+    "text": "What’s the tallest land animal?",
+    "answers": ["Giraffe", "Elephant", "Lion", "Zebra"],
+    "correctAnswer": "Giraffe"
+  },
+  {
+    "text": "Which planet is known as the Red Planet?",
+    "answers": ["Mars", "Earth", "Venus", "Mercury"],
+    "correctAnswer": "Mars"
+  },
+  {
+    "text": "What do bees produce?",
+    "answers": ["Honey", "Wax", "Sugar", "Pollen"],
+    "correctAnswer": "Honey"
+  },
+  {
+    "text": "What’s the chemical symbol for gold?",
+    "answers": ["Au", "Ag", "Fe", "Go"],
+    "correctAnswer": "Au"
+  },
+  {
+    "text": "What instrument has keys, pedals, and strings?",
+    "answers": ["Piano", "Violin", "Guitar", "Drum"],
+    "correctAnswer": "Piano"
+  },
+  {
+    "text": "Who painted the Mona Lisa?",
+    "answers": ["Da Vinci", "Picasso", "Van Gogh", "Rembrandt"],
+    "correctAnswer": "Da Vinci"
+  },
+  {
+    "text": "What organ pumps blood through your body?",
+    "answers": ["Heart", "Lungs", "Liver", "Brain"],
+    "correctAnswer": "Heart"
+  },
+  {
+    "text": "What gas do plants absorb from the air?",
+    "answers": ["Carbon dioxide", "Oxygen", "Hydrogen", "Nitrogen"],
+    "correctAnswer": "Carbon dioxide"
+  },
+  {
+    "text": "What’s the hardest natural substance?",
+    "answers": ["Diamond", "Quartz", "Gold", "Steel"],
+    "correctAnswer": "Diamond"
+  },
+  {
+    "text": "What’s the main ingredient in guacamole?",
+    "answers": ["Avocado", "Tomato", "Pepper", "Onion"],
+    "correctAnswer": "Avocado"
+  },
+  {
+    "text": "How many continents are there?",
+    "answers": ["7", "6", "5", "8"],
+    "correctAnswer": "7"
+  },
+  {
+    "text": "Who discovered gravity?",
+    "answers": ["Newton", "Einstein", "Hawking", "Darwin"],
+    "correctAnswer": "Newton"
+  },
+  {
+    "text": "Which month has 28 days every year?",
+    "answers": ["All of them", "February", "January", "June"],
+    "correctAnswer": "All of them"
+  },
+  {
+    "text": "What is the largest desert on Earth?",
+    "answers": ["Antarctica", "Sahara", "Gobi", "Kalahari"],
+    "correctAnswer": "Antarctica"
+  },
+  {
+    "text": "Who was the first woman in space?",
+    "answers": ["Valentina Tereshkova", "Sally Ride", "Mae Jemison", "Amelia Earhart"],
+    "correctAnswer": "Valentina Tereshkova"
+  },
+  {
+    "text": "What part of the brain processes emotions?",
+    "answers": ["Amygdala", "Hippocampus", "Cortex", "Cerebellum"],
+    "correctAnswer": "Amygdala"
+  },
+  {
+    "text": "What is the national animal of Scotland?",
+    "answers": ["Unicorn", "Lion", "Wolf", "Sheep"],
+    "correctAnswer": "Unicorn"
+  },
+  {
+    "text": "What’s the rarest blood type?",
+    "answers": ["AB negative", "O positive", "A negative", "B positive"],
+    "correctAnswer": "AB negative"
+  },
+  {
+    "text": "What is the only number that has the same number of letters as its value?",
+    "answers": ["Four", "Five", "One", "Zero"],
+    "correctAnswer": "Four"
+  },
+  {
+    "text": "Which element is a liquid metal at room temp?",
+    "answers": ["Mercury", "Silver", "Zinc", "Iron"],
+    "correctAnswer": "Mercury"
+  },
+  {
+    "text": "What country has the most islands?",
+    "answers": ["Sweden", "Indonesia", "Canada", "Japan"],
+    "correctAnswer": "Sweden"
+  },
+  {
+    "text": "What’s the largest organ in the body?",
+    "answers": ["Skin", "Liver", "Brain", "Lungs"],
+    "correctAnswer": "Skin"
+  },
+  {
+    "text": "How many hearts does an octopus have?",
+    "answers": ["3", "2", "1", "4"],
+    "correctAnswer": "3"
+  },
+  {
+    "text": "Which vitamin do you get from sunlight?",
+    "answers": ["D", "B", "C", "A"],
+    "correctAnswer": "D"
+  },
+  {
+    "text": "What is the longest river in the world?",
+    "answers": ["Nile", "Amazon", "Yangtze", "Mississippi"],
+    "correctAnswer": "Nile"
+  },
+  {
+    "text": "What is the largest ocean on Earth?",
+    "answers": ["Pacific Ocean", "Atlantic Ocean", "Indian Ocean", "Arctic Ocean"],
+    "correctAnswer": "Pacific Ocean"
+  },
+  {
+    "text": "In the Harry Potter series, what is the name of the school that Harry attends?",
+    "answers": ["Hogwarts", "Durmstrang", "Ilvermorny", "Beauxbatons"],
+    "correctAnswer": "Hogwarts"
+  },
+  {
+    "text": "The Disney song “Let It Go” is featured in which animated film?",
+    "answers": ["Frozen", "The Lion King", "The Little Mermaid", "Moana"],
+    "correctAnswer": "Frozen"
+  },
+  {
+    "text": "Who was the first man to walk on the Moon, achieving this feat in 1969?",
+    "answers": ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "John Glenn"],
+    "correctAnswer": "Neil Armstrong"
+  },
+  {
+    "text": "Who was the first President of the United States?",
+    "answers": ["George Washington", "Thomas Jefferson", "Abraham Lincoln", "John Adams"],
+    "correctAnswer": "George Washington"
+  },
+  {
+    "text": "What is the fastest land animal on Earth?",
+    "answers": ["Cheetah", "Lion", "Peregrine falcon", "Horse"],
+    "correctAnswer": "Cheetah"
+  },
+  {
+    "text": "Which common metal is strongly attracted by magnets?",
+    "answers": ["Iron", "Aluminum", "Copper", "Gold"],
+    "correctAnswer": "Iron"
+  },
+  {
+    "text": "The nickname “The Big Apple” refers to which major city?",
+    "answers": ["New York City", "Los Angeles", "London", "Chicago"],
+    "correctAnswer": "New York City"
+  },
+  {
+    "text": "What is the capital city of Australia?",
+    "answers": ["Canberra", "Sydney", "Melbourne", "Perth"],
+    "correctAnswer": "Canberra"
+  },
+  {
+    "text": "Butterflies use which part of their body to taste things?",
+    "answers": ["Their feet", "Their tongue", "Their antennae", "Their wings"],
+    "correctAnswer": "Their feet"
+  },
+  {
+    "text": "Which planet has a day that is longer than its year?",
+    "answers": ["Venus", "Mercury", "Jupiter", "Neptune"],
+    "correctAnswer": "Venus"
+  },
+  {
+    "text": "Which cell organelle is famously known as the “powerhouse of the cell”?",
+    "answers": ["The mitochondria", "The nucleus", "The cell membrane", "The ribosome"],
+    "correctAnswer": "The mitochondria"
+  },
+  {
+    "text": "How many bones does an adult human have?",
+    "answers": ["206", "180", "250", "306"],
+    "correctAnswer": "206"
+  },
+  {
+    "text": "What is the largest internal organ in the human body (by mass)?",
+    "answers": ["The liver", "The brain", "The heart", "The lungs"],
+    "correctAnswer": "The liver"
+  },
+  {
+    "text": "Who was the first woman to fly solo across the Atlantic Ocean, in 1932?",
+    "answers": ["Amelia Earhart", "Sally Ride", "Valentina Tereshkova", "Bessie Coleman"],
+    "correctAnswer": "Amelia Earhart"
+  },
+  {
+    "text": "Machu Picchu was built by which ancient civilization?",
+    "answers": ["The Inca Empire", "The Roman Empire", "The Egyptian Empire", "The Aztec Empire"],
+    "correctAnswer": "The Inca Empire"
+  },
+  {
+    "text": "What was the name of the first artificial Earth satellite, launched in 1957?",
+    "answers": ["Sputnik 1", "Apollo 11", "Voyager 1", "Hubble"],
+    "correctAnswer": "Sputnik 1"
+  },
+  {
+    "text": "Which rock band recorded the hit song “Bohemian Rhapsody”?",
+    "answers": ["Queen", "The Beatles", "Pink Floyd", "The Rolling Stones"],
+    "correctAnswer": "Queen"
+  },
+  {
+    "text": "The novel “1984” was written by which author?",
+    "answers": ["George Orwell", "Aldous Huxley", "Ray Bradbury", "J.R.R. Tolkien"],
+    "correctAnswer": "George Orwell"
+  },
+  {
+    "text": "Which artist painted “The Starry Night”?",
+    "answers": ["Vincent van Gogh", "Pablo Picasso", "Claude Monet", "Leonardo da Vinci"],
+    "correctAnswer": "Vincent van Gogh"
+  },
+  {
+    "text": "What is the largest species of shark in the world?",
+    "answers": ["The whale shark", "The great white shark", "The hammerhead shark", "The tiger shark"],
+    "correctAnswer": "The whale shark"
+  },
+  {
+    "text": "What is a group of crows called in English?",
+    "answers": ["A murder", "A flock", "A colony", "A parliament"],
+    "correctAnswer": "A murder"
+  },
+  {
+    "text": "Diamonds are composed almost entirely of which element?",
+    "answers": ["Carbon", "Oxygen", "Silicon", "Iron"],
+    "correctAnswer": "Carbon"
+  },
+  {
+    "text": "Approximately what percentage of the human brain is composed of water?",
+    "answers": ["About 73%", "30%", "55%", "90%"],
+    "correctAnswer": "About 73%"
+  },
+  {
+    "text": "Including its overseas territories, which country spans the most time zones in the world?",
+    "answers": ["France", "Russia", "United States", "China"],
+    "correctAnswer": "France"
+  },
+  {
+    "text": "What is the highest capital city in the world by elevation above sea level?",
+    "answers": ["La Paz, Bolivia", "Kathmandu, Nepal", "Quito, Ecuador", "Lhasa, Tibet"],
+    "correctAnswer": "La Paz, Bolivia"
+  },
+  {
+    "text": "What does the acronym DNA stand for?",
+    "answers": ["Deoxyribonucleic Acid", "Dynamic Nuclear Aminoacid", "Double Helix Nucleic Acid", "Diatomic Nitrogen Array"],
+    "correctAnswer": "Deoxyribonucleic Acid"
+  },
+  {
+    "text": "As of 2025, which planet in our solar system has the most known moons?",
+    "answers": ["Saturn", "Jupiter", "Mars", "Neptune"],
+    "correctAnswer": "Saturn"
+  },
+  {
+    "text": "What is the best-selling video game of all time (by total copies sold)?",
+    "answers": ["Minecraft", "Tetris", "Grand Theft Auto V", "Pac-Man"],
+    "correctAnswer": "Minecraft"
+  },
+  {
+    "text": "What is the brightest star in the night sky as seen from Earth?",
+    "answers": ["Sirius", "Polaris (North Star)", "Alpha Centauri", "Betelgeuse"],
+    "correctAnswer": "Sirius"
+  },
+  {
+    "text": "What was the first country to grant women the right to vote in national elections?",
+    "answers": ["New Zealand", "United States", "Germany", "France"],
+    "correctAnswer": "New Zealand"
+  },
+  {
+    "text": "Which country has won the most FIFA World Cup tournaments in men’s soccer?",
+    "answers": ["Brazil", "Germany", "Italy", "Argentina"],
+    "correctAnswer": "Brazil"
+  },
+  {
+    "text": "What is the name of the deepest location in Earth’s oceans?",
+    "answers": ["The Mariana Trench", "The Great Barrier Reef", "The Java Trench", "The Tonga Trench"],
+    "correctAnswer": "The Mariana Trench"
+  }
+]

@@ -8,6 +8,7 @@ class GameManager {
     weak var cameraNode: SCNNode?
     var infoViewModel: InfoViewModel
 
+    private let questionFileName: String // This will be "mix_all_categories" or a specific file name
     private var questions: [Question] = []
     private var currentQuestionIndex: Int = -1
     private var activeAnswerZones: [AnswerZoneNode] = []
@@ -23,34 +24,95 @@ class GameManager {
     private var initialSpawnPositionForFirstQuestion: SCNVector3?
     private var initialSpawnOrientationForFirstQuestion: SCNQuaternion?
 
-    init(scene: SCNScene, boatNode: SCNNode, cameraNode: SCNNode, infoViewModel: InfoViewModel) {
+    // List of all individual category JSON files (without .json extension)
+    // Ensure "questions.json" (your original default/mix) is NOT listed here
+    // if "mix_all_categories" is meant to load only the *specific* categories.
+    // If your original "questions.json" was a small set and you want to include it in the mix, add "questions" to this list.
+    private let allCategoryFiles: [String] = [
+        "trivia_questions",
+        "positive_thinking_questions",
+        "movies_questions",
+        "gen_z_questions",
+        "mathematics_questions"
+        // Add "questions" here if you also want to include the original `questions.json` in the mix.
+        // For now, I'm assuming "mix_all_categories" means all *other* specific categories.
+    ]
+
+
+    init(scene: SCNScene, boatNode: SCNNode, cameraNode: SCNNode, infoViewModel: InfoViewModel, questionFileName: String) {
         self.scene = scene
         self.boatNode = boatNode
         self.cameraNode = cameraNode
         self.infoViewModel = infoViewModel
+        self.questionFileName = questionFileName
         loadQuestions()
     }
 
     private func loadQuestions() {
-        guard let url = Bundle.main.url(forResource: "questions", withExtension: "json") else {
-            print("Error: questions.json not found in bundle.")
-            self.questions = []
-            infoViewModel.currentQuestionText = "Error: Question data not found."
-            infoViewModel.isGameOver = true
-            return
+        var allLoadedQuestions: [Question] = []
+        var successfullyLoadedAnyFile = false
+        var loadErrors: [String] = []
+
+        if self.questionFileName == "mix_all_categories" {
+            print("Loading questions for MIX mode from files: \(allCategoryFiles.joined(separator: ", "))")
+
+            for fileName in allCategoryFiles {
+                guard let url = Bundle.main.url(forResource: fileName, withExtension: "json") else {
+                    let errorMsg = "Error: Question file '\(fileName).json' not found in bundle for MIX mode."
+                    print(errorMsg)
+                    loadErrors.append(errorMsg)
+                    continue // Skip to the next file
+                }
+
+                do {
+                    let data = try Data(contentsOf: url)
+                    let decoder = JSONDecoder()
+                    let categoryQuestions = try decoder.decode([Question].self, from: data)
+                    allLoadedQuestions.append(contentsOf: categoryQuestions)
+                    successfullyLoadedAnyFile = true // Mark true if at least one file loads
+                    print("Successfully loaded \(categoryQuestions.count) questions from '\(fileName).json' for MIX mode.")
+                } catch {
+                    let errorMsg = "Error loading or decoding '\(fileName).json' for MIX mode: \(error)"
+                    print(errorMsg)
+                    loadErrors.append(errorMsg)
+                }
+            }
+        } else { // Single file mode (for specific categories like Trivia, Math, etc.)
+            guard let url = Bundle.main.url(forResource: self.questionFileName, withExtension: "json") else {
+                let errorMsg = "Error: Question file '\(self.questionFileName).json' not found in bundle."
+                print(errorMsg)
+                self.questions = [] // Ensure questions array is empty on failure
+                infoViewModel.currentQuestionText = "Error: Question data not found for \(self.questionFileName)."
+                infoViewModel.isGameOver = true
+                return
+            }
+
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                allLoadedQuestions = try decoder.decode([Question].self, from: data)
+                successfullyLoadedAnyFile = true // Mark true as we expect this single file to load
+                print("Successfully loaded \(allLoadedQuestions.count) questions from '\(self.questionFileName).json'.")
+            } catch {
+                let errorMsg = "Error loading or decoding '\(self.questionFileName).json': \(error)"
+                print(errorMsg)
+                loadErrors.append(errorMsg)
+                // allLoadedQuestions will remain empty if decoding fails
+            }
         }
 
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            self.questions = try decoder.decode([Question].self, from: data)
-            print("Successfully loaded \(self.questions.count) questions from JSON.")
-            self.questions.shuffle()
-        } catch {
-            print("Error loading or decoding questions.json: \(error)")
+        // After attempting to load all necessary files
+        if !successfullyLoadedAnyFile || allLoadedQuestions.isEmpty {
             self.questions = []
-            infoViewModel.currentQuestionText = "Error: Could not load questions."
+            let finalErrorMsg = loadErrors.isEmpty ? "No questions found." : loadErrors.joined(separator: "\n")
+            let modeNameForError = self.questionFileName == "mix_all_categories" ? "MIX Mode" : self.questionFileName
+            infoViewModel.currentQuestionText = "Error loading questions for \(modeNameForError). \(finalErrorMsg)"
             infoViewModel.isGameOver = true
+            print("Failed to load any questions for mode '\(self.questionFileName)'. Errors: \(finalErrorMsg)")
+        } else {
+            self.questions = allLoadedQuestions
+            self.questions.shuffle()
+            print("Total questions loaded and shuffled for mode '\(self.questionFileName)': \(self.questions.count)")
         }
     }
 
@@ -65,29 +127,31 @@ class GameManager {
         // Store initial parameters if provided (for the very first question spawn)
         self.initialSpawnPositionForFirstQuestion = initialBoatPosition
         self.initialSpawnOrientationForFirstQuestion = initialBoatOrientation
-        print("GameManager.startGame: Initial spawn params set - Pos: \(String(describing: initialBoatPosition)), Ori: \(String(describing: initialBoatOrientation))")
+        print("GameManager.startGame: Initial spawn params set - Pos: \(String(describing: initialBoatPosition)), Ori: \(String(describing: initialBoatOrientation)) for question source: \(questionFileName)")
 
 
-        if questions.isEmpty {
-            loadQuestions()
-        } else {
-            questions.shuffle() // Re-shuffle for a new game
-        }
-
-        if questions.isEmpty {
-            print("No questions available to start the game.")
-            infoViewModel.currentQuestionText = "No questions available to start the game."
-            infoViewModel.isGameOver = true
+        if questions.isEmpty { // This implies loading failed or the file(s) were empty
+            // loadQuestions() might have already set an error message.
+            if !infoViewModel.currentQuestionText.contains("Error") { // Check if an error is already set
+                 infoViewModel.currentQuestionText = "No questions available for \(questionFileName)."
+            }
+            infoViewModel.isGameOver = true // Ensure game over state is set
+            print("No questions available to start the game from source: \(questionFileName).")
             return
         }
         
-        nextQuestion() // This will now use the initial parameters if it's the first call
+        // Questions should already be shuffled by loadQuestions if successful.
+        // If playing multiple times without re-initializing GameManager, consider re-shuffling here.
+        // For now, loadQuestions handles the initial shuffle.
+        // self.questions.shuffle()
+
+        nextQuestion()
     }
 
     func nextQuestion() {
-        guard let scene = scene else { return }
+        guard scene != nil else { return }
         
-        cleanupCurrentQuestion() // Remove old zones and stop timer
+        cleanupCurrentQuestion()
 
         if infoViewModel.health <= 0 {
             gameOver()
@@ -96,14 +160,15 @@ class GameManager {
 
         currentQuestionIndex += 1
         if currentQuestionIndex >= questions.count {
-            if questions.isEmpty {
-                infoViewModel.currentQuestionText = "No questions available. Game Over."
+            if questions.isEmpty { // Should have been caught by startGame, but as a safeguard
+                let modeName = self.questionFileName == "mix_all_categories" ? "MIX Mode" : self.questionFileName
+                infoViewModel.currentQuestionText = "No questions available in \(modeName). Game Over."
                 gameOver()
                 return
             }
-            print("All questions answered. Restarting question cycle.")
+            print("All questions answered from \(questionFileName). Restarting question cycle for this set.")
             currentQuestionIndex = 0
-            questions.shuffle()
+            questions.shuffle() // Re-shuffle when cycling through
             infoViewModel.gameMessage = "New round of questions!"
              DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                  self?.infoViewModel.gameMessage = ""
@@ -111,7 +176,7 @@ class GameManager {
         }
 
         guard questions.indices.contains(currentQuestionIndex) else {
-            print("Error: currentQuestionIndex is out of bounds after attempting to loop.")
+            print("Error: currentQuestionIndex is out of bounds after attempting to loop for \(questionFileName).")
             gameOver()
             return
         }
@@ -119,12 +184,10 @@ class GameManager {
         let question = questions[currentQuestionIndex]
         infoViewModel.currentQuestionText = question.text
 
-        // Determine spawn parameters based on whether it's the initial call or subsequent
         let spawnRefPos: SCNVector3
         var boatWorldForward: SCNVector3
         let boatWorldRight: SCNVector3
 
-        // Check if initial parameters are set AND if this is the first question of this game instance (index 0)
         if let initialPos = self.initialSpawnPositionForFirstQuestion,
            let initialOri = self.initialSpawnOrientationForFirstQuestion,
            currentQuestionIndex == 0 {
@@ -132,18 +195,16 @@ class GameManager {
             print("Spawning FIRST question zones using initial reset position: \(initialPos)")
             spawnRefPos = initialPos
             
-            // Calculate forward and right vectors from the initial orientation
             let q = initialOri
             boatWorldForward = SCNVector3(2 * (q.x * q.z + q.w * q.y),
                                           2 * (q.y * q.z - q.w * q.x),
-                                          1 - 2 * (q.x * q.x + q.y * q.y)).normalized() // This is +Z local
-            boatWorldForward = SCNVector3(-boatWorldForward.x, -boatWorldForward.y, -boatWorldForward.z) // Assuming -Z is "forward" for boats
+                                          1 - 2 * (q.x * q.x + q.y * q.y)).normalized()
+            boatWorldForward = SCNVector3(-boatWorldForward.x, -boatWorldForward.y, -boatWorldForward.z)
 
             boatWorldRight = SCNVector3(1 - 2 * (q.y * q.y + q.z * q.z),
                                          2 * (q.x * q.y + q.w * q.z),
-                                         2 * (q.x * q.z - q.w * q.y)).normalized() // This is +X local
+                                         2 * (q.x * q.z - q.w * q.y)).normalized()
 
-            // Crucially, clear these initial parameters so they are only used once per game start
             self.initialSpawnPositionForFirstQuestion = nil
             self.initialSpawnOrientationForFirstQuestion = nil
             print("Initial spawn params consumed and cleared.")
@@ -151,13 +212,13 @@ class GameManager {
         } else {
             guard let boat = self.boatNode else {
                 print("Error: Boat node not available for subsequent question spawning.")
-                gameOver() // Or handle error appropriately
+                gameOver()
                 return
             }
             print("Spawning zones based on CURRENT boat presentation node. Pos: \(boat.presentation.worldPosition)")
             spawnRefPos = boat.presentation.worldPosition
-            boatWorldForward = boat.presentation.worldFront // worldFront is -Z in world space
-            boatWorldRight = boat.presentation.worldRight   // worldRight is +X in world space
+            boatWorldForward = boat.presentation.worldFront
+            boatWorldRight = boat.presentation.worldRight
         }
 
         spawnAnswerZones(for: question,
@@ -167,37 +228,35 @@ class GameManager {
         startTimer()
     }
 
-    // spawnAnswerZones now takes explicit reference point and orientation vectors
     private func spawnAnswerZones(for question: Question,
                                   spawnReferencePoint boatPos: SCNVector3,
                                   boatWorldForward: SCNVector3,
                                   boatWorldRight: SCNVector3) {
         guard let scene = scene else { return }
-        activeAnswerZones.removeAll() // Clear any previous (should be done by cleanup)
+        activeAnswerZones.removeAll()
 
-        // Project to XZ plane for horizontal layout, and normalize
         var horizontalForward = SCNVector3(boatWorldForward.x, 0, boatWorldForward.z).normalized()
-        if horizontalForward.length() < 0.001 { // Avoid division by zero if boat points straight up/down
-            horizontalForward = SCNVector3(0, 0, -1) // Default forward if original is too vertical
+        if horizontalForward.length() < 0.001 {
+            horizontalForward = SCNVector3(0, 0, -1)
         }
         var horizontalRight = SCNVector3(boatWorldRight.x, 0, boatWorldRight.z).normalized()
         if horizontalRight.length() < 0.001 {
-             // Derive from forward if right is too vertical or zero (e.g. boat looking straight up/down)
             horizontalRight = SCNVector3.cross(SCNVector3(0,1,0), horizontalForward).normalized()
-            if horizontalRight.length() < 0.001 { horizontalRight = SCNVector3(1,0,0) } // Absolute fallback
+            if horizontalRight.length() < 0.001 { horizontalRight = SCNVector3(1,0,0) }
         }
-
 
         let spawnDistanceInFront: Float = 300.0
         let spacingBetweenZoneCenters: Float = Float(AnswerZoneNode.sphereRadius * 5.0 + AnswerZoneNode.sphereRadius * 0.5)
         
-        let numberOfAnswers = Float(question.answers.count)
+        var answerOptions: [(text: String, isCorrect: Bool)] = []
+        for answerText in question.answers {
+            answerOptions.append((text: answerText, isCorrect: (answerText == question.correctAnswer)))
+        }
+        answerOptions.shuffle()
         
-        // Y position for the center of the answer zones.
-        // Using the Y from the spawnReferencePoint.
+        let numberOfAnswers = Float(answerOptions.count)
+        
         let zoneLineY = boatPos.y
-
-        // Calculate the center point of the line of answers
         let lineCenterPoint = SCNVector3(
             boatPos.x + horizontalForward.x * CGFloat(spawnDistanceInFront),
             zoneLineY,
@@ -205,26 +264,24 @@ class GameManager {
         )
 
         let totalLineWidth = (numberOfAnswers - 1.0) * spacingBetweenZoneCenters
-        let offsetForFirstZone = -totalLineWidth / 2.0 // Start from the left (relative to boat's right)
+        let offsetForFirstZone = -totalLineWidth / 2.0
 
         var availableColors = answerZoneColors
         availableColors.shuffle()
 
-        for (index, answerText) in question.answers.enumerated() {
+        for (index, answerOption) in answerOptions.enumerated() {
             let displacementFromLineCenter = offsetForFirstZone + Float(index) * spacingBetweenZoneCenters
             
-            // Position is calculated by moving from lineCenterPoint along the horizontalRight vector
             let position = SCNVector3(
                 lineCenterPoint.x + horizontalRight.x * CGFloat(displacementFromLineCenter),
                 zoneLineY,
                 lineCenterPoint.z + horizontalRight.z * CGFloat(displacementFromLineCenter)
             )
             
-            let isCorrect = (answerText == question.correctAnswer)
             let color = availableColors[index % availableColors.count]
 
-            let answerZone = AnswerZoneNode(answerText: answerText,
-                                            isCorrect: isCorrect,
+            let answerZone = AnswerZoneNode(answerText: answerOption.text,
+                                            isCorrect: answerOption.isCorrect,
                                             color: color,
                                             position: position)
             scene.rootNode.addChildNode(answerZone)
@@ -326,17 +383,14 @@ class GameManager {
         stopTimer()
         activeAnswerZones.forEach { $0.removeFromParentNode() }
         activeAnswerZones.removeAll()
-        // Do NOT clear initialSpawnPositionForFirstQuestion here,
-        // it should only be cleared after its first use in nextQuestion().
     }
 
     private func gameOver() {
         cleanupCurrentQuestion()
         infoViewModel.isGameOver = true
-        if questions.isEmpty && infoViewModel.currentQuestionText.contains("Error") {
-             // Keep the error message
-        } else {
-            infoViewModel.currentQuestionText = "Game Over!"
+        // Keep existing error message if game over was due to loading failure
+        if !(infoViewModel.currentQuestionText.lowercased().contains("error") && questions.isEmpty) {
+             infoViewModel.currentQuestionText = "Game Over!"
         }
         infoViewModel.gameMessage = "Final Score: \(infoViewModel.score)"
         print("GAME OVER. Final Score: \(infoViewModel.score)")

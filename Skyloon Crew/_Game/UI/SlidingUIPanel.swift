@@ -11,6 +11,7 @@ import SwiftUI
 
 struct SlidingUIPanel: View {
     @Binding var currentScreen: ActiveGameScreen
+    @Binding var selectedQuestionFile: String // New binding to pass selection up to ContentView
     @ObservedObject var connectionManager: ConnectionManager
     let geometry: GeometryProxy // To get screen width
     let transitionAnimation: Animation
@@ -35,7 +36,7 @@ struct SlidingUIPanel: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) { 
+        HStack(spacing: 0) {
             // StartScreenView
             StartScreenView(navigateToGameMode: {
                 withAnimation(transitionAnimation) {
@@ -46,7 +47,8 @@ struct SlidingUIPanel: View {
             .id(ActiveGameScreen.start) // Useful for identifying views if needed
 
 
-            GameModeView(navigateToPlayerLoading: {
+            GameModeView(navigateToPlayerLoading: { questionFileForMode in // Closure now accepts question file name
+                self.selectedQuestionFile = questionFileForMode // Update the binding
                 withAnimation(transitionAnimation) {
                     currentScreen = .playerLoading
                 }

@@ -1,0 +1,162 @@
+[
+  {
+    "text": "What does \"no cap\" mean?",
+    "answers": ["Serious", "Lying", "Hat", "Joke"],
+    "correctAnswer": "Serious"
+  },
+  {
+    "text": "What’s the opposite of “based”?",
+    "answers": ["Cringe", "Fire", "Woke", "Iconic"],
+    "correctAnswer": "Cringe"
+  },
+  {
+    "text": "What does “CEO of” mean online?",
+    "answers": ["Master", "Fired", "Inventor", "Banker"],
+    "correctAnswer": "Master"
+  },
+  {
+    "text": "Which app is known for endless scrolling?",
+    "answers": ["TikTok", "Twitter", "VSCO", "Discord"],
+    "correctAnswer": "TikTok"
+  },
+  {
+    "text": "If someone says “I’m dead 💀”, what do they mean?",
+    "answers": ["Laughing", "Dying", "Tired", "Bored"],
+    "correctAnswer": "Laughing"
+  },
+  {
+    "text": "What’s the iconic frog meme called?",
+    "answers": ["Pepe", "Kermit", "Jerry", "Froggy"],
+    "correctAnswer": "Pepe"
+  },
+  {
+    "text": "If someone says \"slay,\" what are they doing?",
+    "answers": ["Hyping", "Fighting", "Crying", "Complaining"],
+    "correctAnswer": "Hyping"
+  },
+  {
+    "text": "“I can’t even” means…",
+    "answers": ["Overwhelmed", "Confused", "Tired", "Mad"],
+    "correctAnswer": "Overwhelmed"
+  },
+  {
+    "text": "What’s “rizz”?",
+    "answers": ["Charm", "Pizza", "Prank", "Game"],
+    "correctAnswer": "Charm"
+  },
+  {
+    "text": "If someone says “that’s sus,” what do they mean?",
+    "answers": ["Suspicious", "Sweet", "Fun", "Bold"],
+    "correctAnswer": "Suspicious"
+  },
+  {
+    "text": "What does “BeReal” focus on?",
+    "answers": ["Candid", "Edited", "Viral", "Loop"],
+    "correctAnswer": "Candid"
+  },
+  {
+    "text": "What does \"girl dinner\" mean?",
+    "answers": ["Snacks", "Salad", "Pasta", "Brunch"],
+    "correctAnswer": "Snacks"
+  },
+  {
+    "text": "What game blew up during lockdown?",
+    "answers": ["AmongUs", "Minecraft", "Fortnite", "Roblox"],
+    "correctAnswer": "AmongUs"
+  },
+  {
+    "text": "What does “caught in 4K” mean?",
+    "answers": ["Exposed", "Pixel", "Famous", "Filter"],
+    "correctAnswer": "Exposed"
+  },
+  {
+    "text": "Which show made rhinestone makeup famous?",
+    "answers": ["Euphoria", "Riverdale", "Elite", "Stranger"],
+    "correctAnswer": "Euphoria"
+  },
+  {
+    "text": "Gen Z version of LOL?",
+    "answers": ["LMAO", "Haha", "Hehe", "OMG"],
+    "correctAnswer": "LMAO"
+  },
+  {
+    "text": "What does “feral” mean?",
+    "answers": ["Wild", "Calm", "Cute", "Chill"],
+    "correctAnswer": "Wild"
+  },
+  {
+    "text": "“Flop era” means…",
+    "answers": ["Failing", "Winning", "Resting", "Party"],
+    "correctAnswer": "Failing"
+  },
+  {
+    "text": "“Built like a fridge” means…",
+    "answers": ["Strong", "Cold", "Slow", "Chunky"],
+    "correctAnswer": "Strong"
+  },
+  {
+    "text": "What is a “glow-up”?",
+    "answers": ["Upgrade", "Fail", "Edit", "Trend"],
+    "correctAnswer": "Upgrade"
+  },
+  {
+    "text": "“Girl math” is…",
+    "answers": ["Logic", "Budget", "Cheat", "Hack"],
+    "correctAnswer": "Logic"
+  },
+  {
+    "text": "A “photo dump” is…",
+    "answers": ["Carousel", "Crash", "Spam", "Glitch"],
+    "correctAnswer": "Carousel"
+  },
+  {
+    "text": "“Gaslight, gatekeep, girlboss” means…",
+    "answers": ["Toxic", "Feminist", "Smart", "Real"],
+    "correctAnswer": "Toxic"
+  },
+  {
+    "text": "“Touch grass” means that a person should spend more time",
+    "answers": ["Offline", "Working out", "Cleaning", "Eating"],
+    "correctAnswer": "Offline"
+  },
+  {
+    "text": "What is “menty b”?",
+    "answers": ["Breakdown", "Makeup", "Mood", "Chill"],
+    "correctAnswer": "Breakdown"
+  },
+  {
+    "text": "“Ate and left no crumbs” means…",
+    "answers": ["Slayed", "Cleaned", "Shared", "Faked"],
+    "correctAnswer": "Slayed"
+  },
+  {
+    "text": "What is a “rizzler”?",
+    "answers": ["Flirter", "Gamer", "Cook", "Bot"],
+    "correctAnswer": "Flirter"
+  },
+  {
+    "text": "A “screenshot friendship” is…",
+    "answers": ["Memes", "DMs", "Tag", "Date"],
+    "correctAnswer": "Memes"
+  },
+  {
+    "text": "Gen Z dream job?",
+    "answers": ["Creator", "Lawyer", "Banker", "Pilot"],
+    "correctAnswer": "Creator"
+  },
+  {
+    "text": "“I’m just a baby!” means…",
+    "answers": ["Fragile", "Real", "Mean", "Loud"],
+    "correctAnswer": "Fragile"
+  },
+  {
+    "text": "“Keyboard warrior” means…",
+    "answers": ["Arguer", "Hacker", "Coach", "Streamer"],
+    "correctAnswer": "Arguer"
+  },
+  {
+    "text": "“NPC energy” means…",
+    "answers": ["Robotic", "Chill", "Cool", "Glitch"],
+    "correctAnswer": "Robotic"
+  }
+]

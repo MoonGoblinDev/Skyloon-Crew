@@ -34,6 +34,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
 
     // Connection Manager and Observation
     private let connectionManager: ConnectionManager
+    private let questionFileName: String // New: To specify which questions to load
     private var cancellables = Set<AnyCancellable>()
 
     // Default starting state for the boat
@@ -55,13 +56,14 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
 
 
     // MARK: - Initializer
-    init(connectionManager: ConnectionManager) {
+    init(connectionManager: ConnectionManager, questionFileName: String) {
         self.connectionManager = connectionManager
+        self.questionFileName = questionFileName
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented. Use init(connectionManager:) instead.")
+        fatalError("init(coder:) has not been implemented. Use init(connectionManager:questionFileName:) instead.")
     }
 
     // MARK: - Lifecycle
@@ -78,7 +80,8 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         gameManager = GameManager(scene: scene,
                                   boatNode: boatNode,
                                   cameraNode: cameraNode,
-                                  infoViewModel: infoViewModel)
+                                  infoViewModel: infoViewModel,
+                                  questionFileName: self.questionFileName) // Pass questionFileName
 
         setupSwiftUIOverlay()
         observeConnectionManager()
@@ -263,6 +266,7 @@ class GameViewController: NSViewController, SCNSceneRendererDelegate, SCNPhysics
         print("Triggering full game restart...")
         GameSoundManager.shared.playBGM(.gameplay, fadeIn: true) // Ensure gameplay BGM plays on restart
         self.prepareForNewGameSceneState()
+        // GameManager's startGame will use the questionFileName it was initialized with
         self.gameManager.startGame(
             initialBoatPosition: self.defaultBoatPosition,
             initialBoatOrientation: self.defaultBoatOrientation
