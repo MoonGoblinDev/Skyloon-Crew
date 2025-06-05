@@ -1,0 +1,21 @@
+{
+  "images" : [
+    {
+      "filename" : "4 humanoid bear, which is panda, red bear, panda, black bear looking at phone playing tiktok and dan.jpeg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

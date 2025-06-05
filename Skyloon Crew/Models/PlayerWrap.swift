@@ -23,7 +23,7 @@ enum CharactersEnum: String, CaseIterable{
     case panda = "Panda";
     case brown_bear = "Brown Bear";
     case polar_bear = "Polar Bear";
-    case red_bear = "Red Bear";
+    case red_panda = "Red Panda";
     case koala = "Koala";
     
     func getImage() -> String {

@@ -19,7 +19,12 @@ struct BearModelView: View {
             .resizable()
             .scaledToFit()
             .background(Color.clear)
+            .onAppear(){
+                print(character)
+            }
     }
+    
+    
 }
 
 #Preview {

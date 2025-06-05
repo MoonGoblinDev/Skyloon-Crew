@@ -40,9 +40,12 @@ struct WaitingForPlayerView: View {
                         
                         VStack {
                             ZStack {
-                                Image("QR")
+                                Image("QR-")
                                     .resizable()
                                     .frame(maxWidth: columnWidth * 2, maxHeight: columnWidth * 2)
+                                    .overlay{
+                                        Text("QR for phone controller will be placed here")
+                                    }
                                     
                                     .cornerRadius(12)
                                     .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)

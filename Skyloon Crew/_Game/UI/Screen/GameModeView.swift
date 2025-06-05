@@ -15,15 +15,13 @@ struct GameModeView: View {
     @State private var selectedGameMode: GameMode?
     var navigateToPlayerLoading: (String) -> Void
 
-    // Game modes with corrected questionFileNames (no .json extension)
-    // And a special identifier for "Mix"
     let gameModes: [GameMode] = [
-        GameMode(name: "Mix", previewImageName: "Skybox", description: "An exciting game mode where the topic of the pathway will be random", questionFileName: "mix_all_categories"), // Special identifier
-        GameMode(name: "Trivia", previewImageName: "Skybox", description: "Test your general knowledge with questions spanning various topics and categories.", questionFileName: "trivia_questions"),
-        GameMode(name: "Positive Thinking", previewImageName: "Skybox", description: "Explore mindfulness and mental wellness through psychology-based questions and exercises.", questionFileName: "positive_thinking_questions"),
-        GameMode(name: "Mathematics", previewImageName: "Skybox", description: "Challenge your numerical skills with math problems ranging from basic to advanced levels.", questionFileName: "mathematics_questions"),
-        GameMode(name: "Movies", previewImageName: "Skybox", description: "Dive into the world of cinema with questions about films, actors, directors, and movie trivia.", questionFileName: "movies_questions"),
-        GameMode(name: "Gen Z", previewImageName: "Skybox", description: "Navigate pop culture, social media trends, and contemporary topics relevant to Generation Z.", questionFileName: "gen_z_questions"),
+        GameMode(name: "Mix", previewImageName: "Mix", description: "An exciting game mode where the topic of the pathway will be random", questionFileName: "mix_all_categories"), // Special identifier
+        GameMode(name: "Trivia", previewImageName: "Trivia", description: "Test your general knowledge with questions spanning various topics and categories.", questionFileName: "trivia_questions"),
+        GameMode(name: "Positive Thinking", previewImageName: "Positive", description: "Explore mindfulness and mental wellness through psychology-based questions and exercises.", questionFileName: "positive_thinking_questions"),
+        GameMode(name: "Mathematics", previewImageName: "Math", description: "Challenge your numerical skills with math problems ranging from basic to advanced levels.", questionFileName: "mathematics_questions"),
+        GameMode(name: "Movies", previewImageName: "Movie", description: "Dive into the world of cinema with questions about films, actors, directors, and movie trivia.", questionFileName: "movies_questions"),
+        GameMode(name: "Gen Z", previewImageName: "Genz", description: "Navigate pop culture, social media trends, and contemporary topics relevant to Generation Z.", questionFileName: "gen_z_questions"),
     ]
 
     init(navigateToPlayerLoading: @escaping (String) -> Void) {

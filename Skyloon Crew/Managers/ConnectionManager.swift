@@ -141,6 +141,8 @@ class ConnectionManager: NSObject, ObservableObject {
                     self.players[playerIndex].playerName = data.player.name
                     self.players[playerIndex].playerColorHex = data.player.colorHex
                     
+                    print(data.player)
+                    
                     // Todo: Check movement gyro
                     //self.players[playerIndex].addMotionData(gyroData.accelerationY)
 
