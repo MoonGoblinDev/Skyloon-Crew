@@ -17,11 +17,11 @@ struct GameModeView: View {
 
     let gameModes: [GameMode] = [
         GameMode(name: "Mix", selected: true, previewImageName: "Skybox", description: "An exciting game mode where the topic of the pathway will be random"),
-        GameMode(name: "Trivia", previewImageName: "partner_party_preview", description: "An exciting game mode where the topic of the pathway will be a Trivia Question."),
-        GameMode(name: "Physcology", previewImageName: "river_survival_preview", description: "An exciting game mode where the topic of the pathway will be a Physcology Question."),
-        GameMode(name: "Mathematics", previewImageName: "sound_stage_preview", description: "Groove to the rhythm in these musical minigames."),
-        GameMode(name: "Science", previewImageName: "minigames_preview", description: "Play all your favorite minigames freely."),
-        GameMode(name: "Biology", previewImageName: "online_mariothon_preview", description: "Compete in a series of minigames online."),
+        GameMode(name: "Trivia", previewImageName: "Skybox", description: "Test your general knowledge with questions spanning various topics and categories."),
+        GameMode(name: "Positive Thinking", previewImageName: "Skybox", description: "Explore mindfulness and mental wellness through psychology-based questions and exercises."),
+        GameMode(name: "Mathematics", previewImageName: "Skybox", description: "Challenge your numerical skills with math problems ranging from basic to advanced levels."),
+        GameMode(name: "Movies", previewImageName: "Skybox", description: "Dive into the world of cinema with questions about films, actors, directors, and movie trivia."),
+        GameMode(name: "Gen Z", previewImageName: "Skybox", description: "Navigate pop culture, social media trends, and contemporary topics relevant to Generation Z."),
     ]
 
     init(navigateToPlayerLoading: @escaping () -> Void) {
